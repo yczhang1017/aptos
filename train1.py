@@ -55,7 +55,7 @@ mean=[0.4402, 0.2334, 0.0674]
 std=[0.2392, 0.1326, 0.0470]
 transform= { 
  'train':transforms.Compose([
-     transforms.Resize(224),
+     transforms.Resize(296),
      transforms.RandomRotation(25),
      transforms.RandomHorizontalFlip(),
      transforms.RandomVerticalFlip(),
@@ -63,7 +63,7 @@ transform= {
      transforms.Normalize(mean,std)
      ]),      
  'val':transforms.Compose([
-     transforms.Resize(224),
+     transforms.Resize(296),
      transforms.ToTensor(),
      transforms.Normalize(mean,std)
      ])}
