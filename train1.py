@@ -109,7 +109,8 @@ def main():
     dataloader={'train':None,'val':None}
     data['train'], data['val'] = \
         train_test_split(df.values.tolist(), test_size=0.1, random_state=42)  
-    dataset={x: APTOSDataset(args.root, x, data[x], transform[x]) 
+    image_folder = os.path.join(args.root,'train_image')
+    dataset={x: APTOSDataset(image_folder, x, data[x], transform[x]) 
             for x in ['train', 'val']}
     dataloader={x: torch.utils.data.DataLoader(dataset[x],
             batch_size=args.batch_size,shuffle=True,
