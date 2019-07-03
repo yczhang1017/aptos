@@ -174,8 +174,7 @@ def main():
                 targets= targets.to(device)
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
-                    outputs = model(inputs)
-                    outputs = outputs.reshape(nb)
+                    outputs = model(inputs).reshape(nb)
                     targets = targets.float()
                     loss = criterion(outputs, targets)
                     if phase == 'train':
@@ -185,14 +184,14 @@ def main():
                 num += nb
                 loss = loss.item() 
                 running_loss += loss * inputs.size(0)
-                propose=torch.round(outputs)
-                acc = (propose==targets)/inputs.size(0)
+                propose=outputs.round().int()
+                acc = (propose==targets.int()).sum().item()/inputs.size(0)
                 t2 = time.time()
                 if num % (1)==0:
-                    print(propose)
-                    print(targets)
+                    print(propose.cpu().tolist())
+                    print(targets.int().cpu().tolist())
                     print('l: {:.4f} | {:.4f}, p: {:.4f} r, t:{:.4f}' \
-                          .format(loss, running_loss, acc, t2-t1))
+                          .format(loss, running_loss/num, acc, t2-t1))
             if phase == 'val':
                 torch.save(model.state_dict(),
                           os.path.join(args.save_folder,'out_'+str(epoch+1)+'.pth'))
