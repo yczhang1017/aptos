@@ -44,8 +44,11 @@ parser.add_argument('--resume_epoch', default=0, type=int,
 parser.add_argument('--model', default='nasnetamobile', type=str,
                     help='model name')
 parser.add_argument('--checkpoint', default=None, type=str,
-                    help='Checkpoint state_dict file to resume training from')
- 
+                    help='Checkpoint state_dict file to resume training from') 
+parser.add_argument('--size', default=None, type=int,
+                    help='image size')
+
+
 args = parser.parse_args()
 
 if not os.path.exists(args.save_folder):
@@ -55,15 +58,15 @@ mean=[0.4402, 0.2334, 0.0674]
 std=[0.2392, 0.1326, 0.0470]
 transform= { 
  'train':transforms.Compose([
-     transforms.Resize(224),
-     transforms.RandomRotation(25),
+     transforms.Resize((args.size,args.size),interpolation=0),
+     transforms.ColorJitter(),
      transforms.RandomHorizontalFlip(),
      transforms.RandomVerticalFlip(),
      transforms.ToTensor(),
      transforms.Normalize(mean,std)
      ]),      
  'val':transforms.Compose([
-     transforms.Resize(224),
+     transforms.Resize((args.size,args.size),interpolation=0),
      transforms.ToTensor(),
      transforms.Normalize(mean,std)
      ])}
@@ -94,7 +97,12 @@ class APTOSDataset(torch.utils.data.Dataset):
         img_name = os.path.join(self.root,
                                 x + '.png')
         image = PIL.Image.open(img_name)
-        image = self.transform(image)
+        w,h = image.size
+        a= (w+h)//2
+        tf = transforms.Compose([
+                transforms.RandomRotation(25),
+                transforms.CenterCrop((a,a))])
+        image = self.transform(tf(image))
         if self.phase in ['train','val']:
             return image, y
         elif self.phase == 'test' :
@@ -180,7 +188,7 @@ def main():
                 t2 = time.time()
                 if num % (1)==0:
                     print(propose)
-                    print(target)
+                    print(targets)
                     print('l: {:.4f} | {:.4f}, p: {:.4f} r, t:{:.4f}' \
                           .format(loss, running_loss, acc, t2-t1))
             if phase == 'val':
