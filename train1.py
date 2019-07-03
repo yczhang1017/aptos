@@ -27,11 +27,11 @@ parser = argparse.ArgumentParser(
     description='train a model')
 parser.add_argument('--root', default='./',
                     type=str, help='directory of the data')
-parser.add_argument('--batch_size', default=24, type=int,
+parser.add_argument('--batch_size', default=64, type=int,
                     help='Batch size for training')
 parser.add_argument('--workers', default=4, type=int,
                     help='Number of workers used in dataloading')
-parser.add_argument('--lr', '--learning-rate', default=0.01, type=float,
+parser.add_argument('--lr', '--learning-rate', default=1e-3, type=float,
                     help='initial learning rate')
 parser.add_argument('-e','--epochs', default=35, type=int,
                     help='number of epochs to train')
@@ -47,7 +47,8 @@ parser.add_argument('--checkpoint', default=None, type=str,
                     help='Checkpoint state_dict file to resume training from') 
 parser.add_argument('--size', default=288, type=int,
                     help='image size')
-
+parser.add_argument('--print', default=10, type=int,
+                    help='print freq')
 
 args = parser.parse_args()
 
@@ -185,9 +186,9 @@ def main():
                 loss = loss.item() 
                 running_loss += loss * inputs.size(0)
                 propose=outputs.round().int()
-                acc = (propose==targets.int()).sum().item()/inputs.size(0)
+                acc = (propose==targets.int()).sum().item()/inputs.size(0)*100
                 t2 = time.time()
-                if num % (1)==0:
+                if num % (20)==0:
                     print(propose.cpu().tolist())
                     print(targets.int().cpu().tolist())
                     print('l: {:.4f} | {:.4f}, p: {:.4f} r, t:{:.4f}' \
