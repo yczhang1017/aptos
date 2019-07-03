@@ -45,7 +45,7 @@ parser.add_argument('--model', default='nasnetamobile', type=str,
                     help='model name')
 parser.add_argument('--checkpoint', default=None, type=str,
                     help='Checkpoint state_dict file to resume training from') 
-parser.add_argument('--size', default=None, type=int,
+parser.add_argument('--size', default=288, type=int,
                     help='image size')
 
 
@@ -136,7 +136,7 @@ def main():
             nn.Dropout(p=0.5),
             nn.Linear(in_features=512, out_features=1, bias=True),
             )
-    print(model)
+    #print(model)
     model = model.to(device)
     if torch.cuda.is_available():
         model=nn.DataParallel(model)
