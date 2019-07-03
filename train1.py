@@ -176,6 +176,7 @@ def main():
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = model(inputs)
                     outputs = outputs.reshape(nb)
+                    targets = targets.float()
                     loss = criterion(outputs, targets)
                     if phase == 'train':
                         loss.backward()
