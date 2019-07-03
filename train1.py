@@ -169,18 +169,19 @@ def main():
             running_loss = 0
             for inputs,targets in dataloader[phase]:
                 t1 = time.time()
+                nb = inputs.size(0)
                 inputs = inputs.to(device)                
                 targets= targets.to(device)
-                
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = model(inputs)
+                    outputs = outputs.reshape(nb)
                     loss = criterion(outputs, targets)
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
                 
-                num += inputs.size(0)
+                num += nb
                 loss = loss.item() 
                 running_loss += loss * inputs.size(0)
                 propose=torch.round(outputs)
