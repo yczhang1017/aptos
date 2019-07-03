@@ -165,34 +165,40 @@ def main():
                 model.train()
             else:
                 model.eval()
-                
+            
+            nb = 0
             num = 0
             running_loss = 0
             for inputs,targets in dataloader[phase]:
                 t1 = time.time()
-                nb = inputs.size(0)
+                batch = inputs.size(0)
                 inputs = inputs.to(device)                
                 targets= targets.to(device)
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
-                    outputs = model(inputs).reshape(nb)
+                    outputs = model(inputs).reshape(batch)
                     targets = targets.float()
                     loss = criterion(outputs, targets)
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
-                
-                num += nb
+                nb +=1
+                num += batch
                 loss = loss.item() 
                 running_loss += loss * inputs.size(0)
                 propose=outputs.round().int()
                 acc = (propose==targets.int()).sum().item()/inputs.size(0)*100
                 t2 = time.time()
-                if num % (20)==0:
+                if nb %args.print ==0:
                     print(propose.cpu().tolist())
                     print(targets.int().cpu().tolist())
-                    print('l: {:.4f} | {:.4f}, p: {:.4f} r, t:{:.4f}' \
-                          .format(loss, running_loss/num, acc, t2-t1))
+                    print('n:{:d} l: {:.4f} | {:.4f}, a: {:.4f} r, t:{:.4f}' \
+                          .format(num, loss, running_loss/num, acc, t2-t1))
+            
+            print('-'*10)
+            print(phase)
+            print('n:{:d} l: {:.4f} | {:.4f}, a: {:.4f} r, t:{:.4f}' \
+                  .format(num, loss, running_loss/num, acc, t2-t1))
             if phase == 'val':
                 torch.save(model.state_dict(),
                           os.path.join(args.save_folder,'out_'+str(epoch+1)+'.pth'))
