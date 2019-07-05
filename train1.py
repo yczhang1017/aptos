@@ -149,7 +149,8 @@ def main():
             nn.ReLU(),
             nn.BatchNorm1d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
             nn.Dropout(p=0.5),
-            nn.Linear(in_features=512, out_features=1, bias=True)
+            nn.Linear(in_features=512, out_features=1, bias=True),
+            nn.Sigmoid()
             )
     #print(model)
     model = model.to(device)
@@ -191,7 +192,7 @@ def main():
                 targets= targets.to(device)
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
-                    outputs = model(inputs).reshape(batch)
+                    outputs = model(inputs).reshape(batch)*5-0.5
                     loss = criterion(outputs, targets.float())
                     if phase == 'train':
                         loss.backward()
@@ -200,8 +201,8 @@ def main():
                 num += batch
                 loss = loss.item() 
                 running_loss += loss * inputs.size(0)
-                p=outputs.round().long()
-                propose=(p>=0).long()*p-(p>=4).long()*(p-4)
+                propose=outputs.round().long()
+                #propose=(p>=0).long()*p-(p>=4).long()*(p-4)
                 correct = (propose==targets).sum().item()
                 acc = correct/batch*100
                 running_correct +=correct
@@ -215,7 +216,7 @@ def main():
             print('='*5,phase,'='*5)
             print('n:{:d}, l:{:.4f}, a:{:.4f}, t:{:.4f}' \
                   .format(num, running_loss/num, running_correct/num*100, t2-t1))
-            print('='*10)
+            print('='*15)
             if phase == 'val':
                 torch.save(model.state_dict(),
                           os.path.join(args.save_folder,'out_'+str(epoch+1)+'.pth'))
