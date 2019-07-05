@@ -118,7 +118,7 @@ class MSELogLoss(nn.Module):
 
 class M4Loss(nn.Module):
     def __init__(self):
-        super(MSELogLoss, self).__init__()
+        super(M4Loss, self).__init__()
     def forward(self, inputs, targets):
         return torch.mean((inputs-targets)*(inputs-targets)*(inputs-targets)*(inputs-targets))
 
