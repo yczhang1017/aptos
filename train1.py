@@ -142,7 +142,7 @@ def main():
     
     model = pretrainedmodels.__dict__[args.model](num_classes=1000, pretrained='imagenet')
     model.avg_pool = nn.Sequential( 
-            nn.Conv2d(in_channels=1026,in_channels=528,stride=2,kernel_size=3,groups=24),
+            nn.Conv2d(in_channels=1026,out_channels=528,stride=2,kernel_size=3,groups=24),
             nn.AdaptiveAvgPool2d(1),
             )
     model.last_linear = nn.Sequential( 
