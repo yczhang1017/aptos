@@ -143,6 +143,7 @@ def main():
             nn.BatchNorm1d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
             nn.Dropout(p=0.5),
             nn.Linear(in_features=512, out_features=1, bias=True),
+            nn.Sigmoid()
             )
     #print(model)
     model = model.to(device)
@@ -193,10 +194,11 @@ def main():
                 num += batch
                 loss = loss.item() 
                 running_loss += loss * inputs.size(0)
-                propose=outputs.round().int()
+                propose=(outputs*5-1).round().int()
                 acc = (propose==targets.int()).sum().item()/inputs.size(0)*100
                 t2 = time.time()
                 if nb %args.print ==0:
+                    print(outputs.cpu().tolist())
                     print(propose.cpu().tolist())
                     print(targets.int().cpu().tolist())
                     print('n:{:d} l: {:.4f} | {:.4f}, a: {:.4f} r, t:{:.4f}' \
