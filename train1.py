@@ -200,8 +200,8 @@ def main():
                 running_correct +=correct
                 t2 = time.time()
                 if nb %args.print ==0:
-                    print('|'.join(propose.cpu().tolist()))
-                    print('|'.join(targets.cpu().tolist()))
+                    print('|'.join(str(x) for x in propose.cpu().tolist()))
+                    print('|'.join(str(x) for x in targets.cpu().tolist()))
                     print('n:{:d}, l:{:.4f}|{:.4f}, a:{:.4f}|{:.4f}, t:{:.4f}' \
                           .format(num, loss, running_loss/num, acc, acc,running_correct/num*100, t2-t1))
             
