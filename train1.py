@@ -142,18 +142,19 @@ def main():
     
     model = pretrainedmodels.__dict__[args.model](num_classes=1000, pretrained='imagenet')
     model.avg_pool = nn.Sequential( 
-            nn.Conv2d(in_chnnels=1026,out_chnnels=528,stride=2,kernel_size=3,groups=24),
+            nn.Conv2d(in_channels=1026,in_channels=528,stride=2,kernel_size=3,groups=24),
             nn.AdaptiveAvgPool2d(1),
             )
     model.last_linear = nn.Sequential( 
             nn.Linear(in_features=528, out_features=264, bias=True),
             nn.ReLU(),
             nn.BatchNorm1d(264, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
-            nn.Dropout(p=0.5),
             nn.Linear(in_features=264, out_features=132, bias=True),
-            nn.Dropout(p=0.5),
             nn.ReLU(),
-            nn.Linear(in_features=132, out_features=1, bias=True)
+            nn.Dropout(p=0.5),
+            nn.Linear(in_features=132, out_features=30, bias=True),
+            nn.ReLU(),
+            nn.Linear(in_features=30, out_features=1, bias=True)
             )
     #print(model)
     model = model.to(device)
