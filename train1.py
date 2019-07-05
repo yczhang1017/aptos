@@ -27,11 +27,11 @@ parser = argparse.ArgumentParser(
     description='train a model')
 parser.add_argument('--root', default='./',
                     type=str, help='directory of the data')
-parser.add_argument('--batch_size', default=32, type=int,
+parser.add_argument('--batch_size', default=16, type=int,
                     help='Batch size for training')
 parser.add_argument('--workers', default=4, type=int,
                     help='Number of workers used in dataloading')
-parser.add_argument('--lr', '--learning-rate', default=1e-3, type=float,
+parser.add_argument('--lr', '--learning-rate', default=0.01, type=float,
                     help='initial learning rate')
 parser.add_argument('-e','--epochs', default=35, type=int,
                     help='number of epochs to train')
@@ -114,7 +114,7 @@ class MSELogLoss(nn.Module):
     def __init__(self):
         super(MSELogLoss, self).__init__()
     def forward(self, inputs, targets):
-        return -torch.log(1-(inputs-targets)*(inputs-targets)*(1/0.9/0.9))
+        return torch.mean(-(1-(inputs-targets)*(inputs-targets)*(1/0.9/0.9)).log())
         
         
 def main():
