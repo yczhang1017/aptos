@@ -31,7 +31,7 @@ parser.add_argument('--batch_size', default=16, type=int,
                     help='Batch size for training')
 parser.add_argument('--workers', default=4, type=int,
                     help='Number of workers used in dataloading')
-parser.add_argument('--lr', '--learning-rate', default=0.01, type=float,
+parser.add_argument('--lr', '--learning-rate', default=1e-3, type=float,
                     help='initial learning rate')
 parser.add_argument('-e','--epochs', default=35, type=int,
                     help='number of epochs to train')
@@ -114,7 +114,7 @@ class MSELogLoss(nn.Module):
     def __init__(self):
         super(MSELogLoss, self).__init__()
     def forward(self, inputs, targets):
-        return torch.mean(-(1-(inputs-targets)*(inputs-targets)*(1/0.9/0.9)).log())
+        return torch.mean(-(1-(inputs-targets)*(inputs-targets)*(1/4.5/4.5)).log())
         
         
 def main():
@@ -184,9 +184,8 @@ def main():
                 targets= targets.to(device)/4
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
-                    outputs = model(inputs).reshape(batch)
-                    targets = targets.float()*0.2 + 0.1
-                    loss = criterion(outputs, targets)
+                    outputs = model(inputs).reshape(batch)*5-0.5
+                    loss = criterion(outputs, targets.float())
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
@@ -194,8 +193,8 @@ def main():
                 num += batch
                 loss = loss.item() 
                 running_loss += loss * inputs.size(0)
-                propose=(outputs*5-0.5).round().int()
-                acc = (propose==targets.int()).sum().item()/inputs.size(0)*100
+                propose=outputs.round().int()
+                acc = (propose==targets).sum().item()/inputs.size(0)*100
                 t2 = time.time()
                 if nb %args.print ==0:
                     print(propose.cpu().tolist())
