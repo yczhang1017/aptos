@@ -115,8 +115,15 @@ class MSELogLoss(nn.Module):
         super(MSELogLoss, self).__init__()
     def forward(self, inputs, targets):
         return torch.mean(-(1-(inputs-targets)*(inputs-targets)*(1/4.5/4.5)).log())
+
+class M4Loss(nn.Module):
+    def __init__(self):
+        super(MSELogLoss, self).__init__()
+    def forward(self, inputs, targets):
+        return torch.mean((inputs-targets)*(inputs-targets)*(inputs-targets)*(inputs-targets))
+
         
-        
+
 def main():
     train_csv=os.path.join(args.root, 'train.csv')
     df  = pd.read_csv(train_csv)
@@ -142,8 +149,7 @@ def main():
             nn.ReLU(),
             nn.BatchNorm1d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
             nn.Dropout(p=0.5),
-            nn.Linear(in_features=512, out_features=1, bias=True),
-            nn.Sigmoid()
+            nn.Linear(in_features=512, out_features=1, bias=True)
             )
     #print(model)
     model = model.to(device)
@@ -157,7 +163,7 @@ def main():
         model.load_state_dict(torch.load(weight_file,
                                  map_location=lambda storage, loc: storage))    
 
-    criterion = nn.MSELoss()
+    criterion = M4Loss()
     optimizer = optim.SGD(model.parameters(),lr=args.lr, 
                           momentum=0.9, weight_decay=args.weight_decay)
     scheduler = MultiStepLR(optimizer, milestones=[16,25,30], gamma=0.1)
