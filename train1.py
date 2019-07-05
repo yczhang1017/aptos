@@ -143,17 +143,17 @@ def main():
     model = pretrainedmodels.__dict__[args.model](num_classes=1000, pretrained='imagenet')
     model.avg_pool = nn.AdaptiveAvgPool2d(1)
     model.last_linear = nn.Sequential( 
-            nn.Linear(in_features=528, out_features=264, bias=True),
+            nn.Linear(in_features=1026, out_features=600, bias=True),
             nn.ReLU(),
-            nn.BatchNorm1d(264),
-            nn.Linear(in_features=264, out_features=132, bias=True),
+            nn.BatchNorm1d(600),
+            nn.Linear(in_features=600, out_features=200, bias=True),
             nn.ReLU(),
             nn.Dropout(p=0.5),
-            nn.BatchNorm1d(132),
-            nn.Linear(in_features=132, out_features=30, bias=True),
+            nn.BatchNorm1d(200),
+            nn.Linear(in_features=200, out_features=40, bias=True),
             nn.ReLU(),
-            nn.BatchNorm1d(30),
-            nn.Linear(in_features=30, out_features=1, bias=True)
+            nn.BatchNorm1d(40),
+            nn.Linear(in_features=40, out_features=1, bias=True)
             )
     #print(model)
     model = model.to(device)
