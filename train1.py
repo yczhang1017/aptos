@@ -148,12 +148,14 @@ def main():
     model.last_linear = nn.Sequential( 
             nn.Linear(in_features=528, out_features=264, bias=True),
             nn.ReLU(),
-            nn.BatchNorm1d(264, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
+            nn.BatchNorm1d(264),
             nn.Linear(in_features=264, out_features=132, bias=True),
             nn.ReLU(),
             nn.Dropout(p=0.5),
+            nn.BatchNorm1d(132),
             nn.Linear(in_features=132, out_features=30, bias=True),
             nn.ReLU(),
+            nn.BatchNorm1d(30),
             nn.Linear(in_features=30, out_features=1, bias=True)
             )
     #print(model)
