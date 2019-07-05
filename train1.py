@@ -181,7 +181,7 @@ def main():
                 t1 = time.time()
                 batch = inputs.size(0)
                 inputs = inputs.to(device)                
-                targets= targets.to(device)/4
+                targets= targets.to(device)
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = model(inputs).reshape(batch)*5-0.5
