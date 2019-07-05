@@ -194,11 +194,10 @@ def main():
                 num += batch
                 loss = loss.item() 
                 running_loss += loss * inputs.size(0)
-                propose=(outputs*5-1).round().int()
+                propose=(outputs*5-0.5).round().int()
                 acc = (propose==targets.int()).sum().item()/inputs.size(0)*100
                 t2 = time.time()
                 if nb %args.print ==0:
-                    print(outputs.cpu().tolist())
                     print(propose.cpu().tolist())
                     print(targets.int().cpu().tolist())
                     print('n:{:d} l: {:.4f} | {:.4f}, a: {:.4f} r, t:{:.4f}' \
