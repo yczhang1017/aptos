@@ -141,10 +141,7 @@ def main():
             for x in ['train', 'val']}
     
     model = pretrainedmodels.__dict__[args.model](num_classes=1000, pretrained='imagenet')
-    model.avg_pool = nn.Sequential( 
-            nn.Conv2d(in_channels=1056,out_channels=528,stride=2,kernel_size=3,groups=24),
-            nn.AdaptiveAvgPool2d(1),
-            )
+    model.avg_pool = nn.AdaptiveAvgPool2d(1)
     model.last_linear = nn.Sequential( 
             nn.Linear(in_features=528, out_features=264, bias=True),
             nn.ReLU(),
