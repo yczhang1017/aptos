@@ -157,7 +157,7 @@ def main():
         model.load_state_dict(torch.load(weight_file,
                                  map_location=lambda storage, loc: storage))    
 
-    criterion = nn.MSELogLoss()
+    criterion = MSELogLoss()
     optimizer = optim.SGD(model.parameters(),lr=args.lr, 
                           momentum=0.9, weight_decay=args.weight_decay)
     scheduler = MultiStepLR(optimizer, milestones=[16,25,30], gamma=0.1)
