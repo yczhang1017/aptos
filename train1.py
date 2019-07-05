@@ -27,7 +27,7 @@ parser = argparse.ArgumentParser(
     description='train a model')
 parser.add_argument('--root', default='./',
                     type=str, help='directory of the data')
-parser.add_argument('--batch_size', default=64, type=int,
+parser.add_argument('--batch_size', default=32, type=int,
                     help='Batch size for training')
 parser.add_argument('--workers', default=4, type=int,
                     help='Number of workers used in dataloading')
@@ -45,7 +45,7 @@ parser.add_argument('--model', default='nasnetamobile', type=str,
                     help='model name')
 parser.add_argument('--checkpoint', default=None, type=str,
                     help='Checkpoint state_dict file to resume training from') 
-parser.add_argument('--size', default=288, type=int,
+parser.add_argument('--size', default=512, type=int,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
@@ -59,15 +59,16 @@ mean=[0.4402, 0.2334, 0.0674]
 std=[0.2392, 0.1326, 0.0470]
 transform= { 
  'train':transforms.Compose([
-     transforms.Resize((args.size,args.size),interpolation=0),
-     transforms.ColorJitter(),
+     transforms.Resize((args.size,args.size)),
+     transforms.RandomResizedCrop(args.size,scale=(0.5, 1.0), ratio=(0.9, 1.1111)),
+     transforms.ColorJitter(0.2,0.1,0.1,0.04),
      transforms.RandomHorizontalFlip(),
      transforms.RandomVerticalFlip(),
      transforms.ToTensor(),
      transforms.Normalize(mean,std)
      ]),      
  'val':transforms.Compose([
-     transforms.Resize((args.size,args.size),interpolation=0),
+     transforms.Resize((args.size,args.size)),
      transforms.ToTensor(),
      transforms.Normalize(mean,std)
      ])}
@@ -99,7 +100,7 @@ class APTOSDataset(torch.utils.data.Dataset):
                                 x + '.png')
         image = PIL.Image.open(img_name)
         w,h = image.size
-        a= (w+h)//2
+        a= np.sqrt(w*h)
         tf = transforms.Compose([
                 transforms.RandomRotation(25),
                 transforms.CenterCrop((a,a))])
@@ -108,6 +109,12 @@ class APTOSDataset(torch.utils.data.Dataset):
             return image, y
         elif self.phase == 'test' :
             return image 
+        
+class MSELogLoss(nn.Module):
+    def __init__(self):
+        super(MSELogLoss, self).__init__()
+    def forward(self, inputs, targets):
+        return -torch.log(1-(inputs-targets)*(inputs-targets)*(1/0.9/0.9))
         
         
 def main():
@@ -136,6 +143,7 @@ def main():
             nn.BatchNorm1d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
             nn.Dropout(p=0.5),
             nn.Linear(in_features=512, out_features=1, bias=True),
+            nn.Sigmoid()
             )
     #print(model)
     model = model.to(device)
@@ -149,10 +157,10 @@ def main():
         model.load_state_dict(torch.load(weight_file,
                                  map_location=lambda storage, loc: storage))    
 
-    criterion = nn.MSELoss()
+    criterion = nn.MSELogLoss()
     optimizer = optim.SGD(model.parameters(),lr=args.lr, 
                           momentum=0.9, weight_decay=args.weight_decay)
-    scheduler = MultiStepLR(optimizer, milestones=[20,25,30], gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=[16,25,30], gamma=0.1)
    
     for i in range(args.resume_epoch):
         scheduler.step()
@@ -173,11 +181,11 @@ def main():
                 t1 = time.time()
                 batch = inputs.size(0)
                 inputs = inputs.to(device)                
-                targets= targets.to(device)
+                targets= targets.to(device)/4
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = model(inputs).reshape(batch)
-                    targets = targets.float()
+                    targets = targets.float()*0.2 + 0.1
                     loss = criterion(outputs, targets)
                     if phase == 'train':
                         loss.backward()
