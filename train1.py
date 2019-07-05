@@ -149,8 +149,7 @@ def main():
             nn.ReLU(),
             nn.BatchNorm1d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
             nn.Dropout(p=0.5),
-            nn.Linear(in_features=512, out_features=1, bias=True),
-            nn.Sigmoid()
+            nn.Linear(in_features=512, out_features=1, bias=True)
             )
     #print(model)
     model = model.to(device)
@@ -192,7 +191,7 @@ def main():
                 targets= targets.to(device)
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
-                    outputs = model(inputs).reshape(batch)*5-0.5
+                    outputs = model(inputs).reshape(batch)
                     loss = criterion(outputs, targets.float())
                     if phase == 'train':
                         loss.backward()
@@ -201,8 +200,8 @@ def main():
                 num += batch
                 loss = loss.item() 
                 running_loss += loss * inputs.size(0)
-                propose=outputs.round().long()
-                #propose=(p>=0).long()*p-(p>=4).long()*(p-4)
+                p=outputs.round().long()
+                propose=(p>=0).long()*p-(p>=4).long()*(p-4)
                 correct = (propose==targets).sum().item()
                 acc = correct/batch*100
                 running_correct +=correct
