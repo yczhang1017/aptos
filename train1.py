@@ -143,7 +143,6 @@ def main():
             nn.BatchNorm1d(512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
             nn.Dropout(p=0.5),
             nn.Linear(in_features=512, out_features=1, bias=True),
-            nn.Sigmoid()
             )
     #print(model)
     model = model.to(device)
