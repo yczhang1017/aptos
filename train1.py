@@ -177,6 +177,7 @@ def main():
             nb = 0
             num = 0
             running_loss = 0
+            running_correct = 0
             for inputs,targets in dataloader[phase]:
                 t1 = time.time()
                 batch = inputs.size(0)
@@ -194,18 +195,20 @@ def main():
                 loss = loss.item() 
                 running_loss += loss * inputs.size(0)
                 propose=outputs.round().long()
-                acc = (propose==targets).sum().item()/inputs.size(0)*100
+                correct = (propose==targets).sum().item()
+                acc = correct/batch*100
+                running_correct +=correct
                 t2 = time.time()
                 if nb %args.print ==0:
-                    print(propose.cpu().tolist())
-                    print(targets.cpu().tolist())
-                    print('n:{:d} l: {:.4f} | {:.4f}, a: {:.4f} r, t:{:.4f}' \
-                          .format(num, loss, running_loss/num, acc, t2-t1))
+                    print('|'.join(propose.cpu().tolist()))
+                    print('|'.join(targets.cpu().tolist()))
+                    print('n:{:d}, l:{:.4f}|{:.4f}, a:{:.4f}|{:.4f}, t:{:.4f}' \
+                          .format(num, loss, running_loss/num, acc, acc,running_correct/num*100, t2-t1))
             
-            print('-'*10)
-            print(phase)
-            print('n:{:d} l: {:.4f} | {:.4f}, a: {:.4f} r, t:{:.4f}' \
-                  .format(num, loss, running_loss/num, acc, t2-t1))
+            print('='*5,phase,'='*5)
+            print('n:{:d}, l:{:.4f}, a:{:.4f}, t:{:.4f}' \
+                  .format(num, running_loss/num, running_correct/num*100, t2-t1))
+            print('='*10)
             if phase == 'val':
                 torch.save(model.state_dict(),
                           os.path.join(args.save_folder,'out_'+str(epoch+1)+'.pth'))
