@@ -163,7 +163,7 @@ def main():
         model.load_state_dict(torch.load(weight_file,
                                  map_location=lambda storage, loc: storage))    
 
-    criterion = M4Loss()
+    criterion = nn.MSELoss()
     optimizer = optim.SGD(model.parameters(),lr=args.lr, 
                           momentum=0.9, weight_decay=args.weight_decay)
     scheduler = MultiStepLR(optimizer, milestones=[16,25,30], gamma=0.1)
@@ -191,7 +191,7 @@ def main():
                 targets= targets.to(device)
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
-                    outputs = model(inputs).reshape(batch)*5-0.5
+                    outputs = model(inputs).reshape(batch)
                     loss = criterion(outputs, targets.float())
                     if phase == 'train':
                         loss.backward()
@@ -200,7 +200,8 @@ def main():
                 num += batch
                 loss = loss.item() 
                 running_loss += loss * inputs.size(0)
-                propose=outputs.round().long()
+                p=outputs.round().long()
+                propose=(p>=0).long()*p-(p>=4).long()*(p-4)
                 correct = (propose==targets).sum().item()
                 acc = correct/batch*100
                 running_correct +=correct
