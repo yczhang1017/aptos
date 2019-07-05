@@ -157,7 +157,7 @@ def main():
         model.load_state_dict(torch.load(weight_file,
                                  map_location=lambda storage, loc: storage))    
 
-    criterion = MSELogLoss()
+    criterion = nn.MSELoss()
     optimizer = optim.SGD(model.parameters(),lr=args.lr, 
                           momentum=0.9, weight_decay=args.weight_decay)
     scheduler = MultiStepLR(optimizer, milestones=[16,25,30], gamma=0.1)
@@ -198,7 +198,7 @@ def main():
                 t2 = time.time()
                 if nb %args.print ==0:
                     print(propose.cpu().tolist())
-                    print(targets.int().cpu().tolist())
+                    print(targets.cpu().tolist())
                     print('n:{:d} l: {:.4f} | {:.4f}, a: {:.4f} r, t:{:.4f}' \
                           .format(num, loss, running_loss/num, acc, t2-t1))
             
