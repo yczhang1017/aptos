@@ -210,7 +210,7 @@ def main():
                     print('|'.join(str(x) for x in propose.cpu().tolist()))
                     print('|'.join(str(x) for x in targets.cpu().tolist()))
                     print('n:{:d}, l:{:.4f}|{:.4f}, a:{:.4f}|{:.4f}, t:{:.4f}' \
-                          .format(num, loss, running_loss/num, acc, acc,running_correct/num*100, t2-t1))
+                          .format(num, loss, running_loss/num, acc, running_correct/num*100, t2-t1))
             
             print('='*5,phase,'='*5)
             print('n:{:d}, l:{:.4f}, a:{:.4f}, t:{:.4f}' \
