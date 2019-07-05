@@ -193,7 +193,7 @@ def main():
                 num += batch
                 loss = loss.item() 
                 running_loss += loss * inputs.size(0)
-                propose=outputs.round().int()
+                propose=outputs.round().long()
                 acc = (propose==targets).sum().item()/inputs.size(0)*100
                 t2 = time.time()
                 if nb %args.print ==0:
