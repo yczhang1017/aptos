@@ -153,11 +153,15 @@ def main():
     model.last_linear = nn.Sequential( 
             nn.BatchNorm1d(1056),
             nn.Dropout(p=0.25),
-            nn.Linear(in_features=1056, out_features=528, bias=True),
+            nn.Linear(in_features=1056, out_features=400, bias=True),
             nn.ReLU(),
-            nn.BatchNorm1d(528),
+            nn.BatchNorm1d(400),
             nn.Dropout(p=0.25),
-            nn.Linear(in_features=528, out_features=1, bias=True),
+            nn.Linear(in_features=400, out_features=60, bias=True),
+            nn.ReLU(),
+            nn.BatchNorm1d(60),
+            nn.Dropout(p=0.25),
+            nn.Linear(in_features=60, out_features=1, bias=True),
             )
     #print(model)
     model = model.to(device)
