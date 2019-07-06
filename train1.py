@@ -129,17 +129,22 @@ def main():
     df  = pd.read_csv(train_csv)
     dist= df.groupby('diagnosis').count().values.reshape(5)
     multi=np.sqrt(dist[0]/dist).round()
-    datalist=[]
-    for i in range(len(df)):
-        r=df.iloc[i]
-        diag=r['diagnosis']
-        for j in range(int(multi[diag])):
-            datalist.append(r.values.tolist())
+    
     data={'train':None,'val':None}
     dataset={'train':None,'val':None}
     dataloader={'train':None,'val':None}
-    data['train'], data['val'] = \
-        train_test_split(datalist, test_size=0.1, random_state=42)  
+    datalist, data['val'] = \
+        train_test_split(df.values.tolist(), test_size=0.1, random_state=42)  
+    
+    data['train']=[]
+    for i in range(len(datalist)):
+        r=df.iloc[i]
+        diag=r['diagnosis']
+        for j in range(int(multi[diag])):
+            data['train'].append(r.values.tolist())
+    
+    
+    print(len(data['train']),len(data['val']))
     image_folder = os.path.join(args.root,'train_image')
     dataset={x: APTOSDataset(image_folder, x, data[x], transform[x]) 
             for x in ['train', 'val']}
