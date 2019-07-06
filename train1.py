@@ -109,7 +109,7 @@ class APTOSDataset(torch.utils.data.Dataset):
             return image, y
         elif self.phase == 'test' :
             return image 
-        
+'''        
 class MSELogLoss(nn.Module):
     def __init__(self):
         super(MSELogLoss, self).__init__()
@@ -121,17 +121,25 @@ class M4Loss(nn.Module):
         super(M4Loss, self).__init__()
     def forward(self, inputs, targets):
         return torch.mean((inputs-targets)*(inputs-targets)*(inputs-targets)*(inputs-targets))
-
+'''
         
 
 def main():
     train_csv=os.path.join(args.root, 'train.csv')
     df  = pd.read_csv(train_csv)
+    dist= df.groupby('diagnosis').count().values.reshape(5)
+    multi=np.sqrt(dist[0]/dist).round()
+    datalist=[]
+    for i in range(len(df)):
+        r=df.iloc[i]
+        diag=r['diagnosis']
+        for j in range(int(multi[diag])):
+            datalist.append(r.values.tolist())
     data={'train':None,'val':None}
     dataset={'train':None,'val':None}
     dataloader={'train':None,'val':None}
     data['train'], data['val'] = \
-        train_test_split(df.values.tolist(), test_size=0.1, random_state=42)  
+        train_test_split(datalist, test_size=0.1, random_state=42)  
     image_folder = os.path.join(args.root,'train_image')
     dataset={x: APTOSDataset(image_folder, x, data[x], transform[x]) 
             for x in ['train', 'val']}
