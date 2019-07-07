@@ -34,7 +34,7 @@ parser.add_argument('--workers', default=4, type=int,
                     help='Number of workers used in dataloading')
 parser.add_argument('--lr', '--learning-rate', default=2e-3, type=float,
                     help='initial learning rate')
-parser.add_argument('-e','--epochs', default=35, type=int,
+parser.add_argument('-e','--epochs', default=48, type=int,
                     help='number of epochs to train')
 parser.add_argument('-s','--save_folder', default='save/', type=str,
                     help='Dir to save results')
@@ -196,7 +196,7 @@ def main():
     criterion = weighted_mse(rev_dist);
     optimizer = optim.SGD(model.parameters(),lr=args.lr, 
                           momentum=0.9, weight_decay=args.weight_decay)
-    scheduler = MultiStepLR(optimizer, milestones=[16,25,30], gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=[16,24,32,40], gamma=0.1)
    
     for i in range(args.resume_epoch):
         scheduler.step()
