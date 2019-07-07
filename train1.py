@@ -28,7 +28,7 @@ parser = argparse.ArgumentParser(
     description='train a model')
 parser.add_argument('--root', default='./',
                     type=str, help='directory of the data')
-parser.add_argument('--batch', default=8, type=int,
+parser.add_argument('--batch', default=16, type=int,
                     help='Batch size for training')
 parser.add_argument('--workers', default=4, type=int,
                     help='Number of workers used in dataloading')
@@ -60,9 +60,8 @@ mean=[0.4402, 0.2334, 0.0674]
 std=[0.2392, 0.1326, 0.0470]
 transform= { 
  'train':transforms.Compose([
-     transforms.Resize((args.size,args.size)),
-     transforms.RandomResizedCrop(args.size,scale=(0.5, 1.0), ratio=(0.9, 1.1111)),
-     transforms.ColorJitter(0.2,0.1,0.1,0.04),
+     transforms.RandomResizedCrop(args.size,scale=(0.5, 1.0), ratio=(1, 1)),
+     transforms.ColorJitter(0.1,0.05,0.05,0.02),
      transforms.RandomHorizontalFlip(),
      transforms.RandomVerticalFlip(),
      transforms.ToTensor(),
@@ -103,7 +102,7 @@ class APTOSDataset(torch.utils.data.Dataset):
         w,h = image.size
         a= np.sqrt(w*h)
         tf = transforms.Compose([
-                transforms.RandomRotation(25),
+                transforms.RandomRotation(12),
                 transforms.CenterCrop((a,a))])
         image = self.transform(tf(image))
         if self.phase in ['train','val']:
