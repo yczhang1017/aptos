@@ -28,7 +28,7 @@ parser = argparse.ArgumentParser(
     description='train a model')
 parser.add_argument('--root', default='./',
                     type=str, help='directory of the data')
-parser.add_argument('--batch', default=16, type=int,
+parser.add_argument('--batch', default=32, type=int,
                     help='Batch size for training')
 parser.add_argument('--workers', default=4, type=int,
                     help='Number of workers used in dataloading')
