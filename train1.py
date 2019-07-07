@@ -15,6 +15,7 @@ import argparse
 import pretrainedmodels
 from sklearn.model_selection import train_test_split
 
+from nasnet import nasnetv2
 #import torch.nn.functional as F
 
 #from torch.autograd import Variable
@@ -27,7 +28,7 @@ parser = argparse.ArgumentParser(
     description='train a model')
 parser.add_argument('--root', default='./',
                     type=str, help='directory of the data')
-parser.add_argument('--batch_size', default=16, type=int,
+parser.add_argument('--batch_size', default=32, type=int,
                     help='Batch size for training')
 parser.add_argument('--workers', default=4, type=int,
                     help='Number of workers used in dataloading')
@@ -41,11 +42,11 @@ parser.add_argument('--weight_decay', default=5e-4, type=float,
                     help='Weight decay')
 parser.add_argument('--resume_epoch', default=0, type=int,
                     help='epoch number to be resumed at')
-parser.add_argument('--model', default='nasnetamobile', type=str,
+parser.add_argument('--model', default='nasnetv2', type=str,
                     help='model name')
 parser.add_argument('--checkpoint', default=None, type=str,
                     help='Checkpoint state_dict file to resume training from') 
-parser.add_argument('--size', default=512, type=int,
+parser.add_argument('--size', default=384, type=int,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
@@ -122,27 +123,34 @@ class M4Loss(nn.Module):
     def forward(self, inputs, targets):
         return torch.mean((inputs-targets)*(inputs-targets)*(inputs-targets)*(inputs-targets))
 '''
-        
-
+class weighted_mse(nn.Module):
+    def __init__(self, weight):
+        super(weighted_mse, self).__init__()
+        self.weight=weight
+    def forward(self, inputs, targets):
+        return torch.mean(self.weight[targets]*(inputs-targets)*(inputs-targets))
+    
+    
+    
 def main():
     train_csv=os.path.join(args.root, 'train.csv')
     df  = pd.read_csv(train_csv)
     dist= df.groupby('diagnosis').count().values.reshape(5)
-    multi=np.sqrt(dist[0]/dist).round()
+    rev_dist=torch.tensor(dist[0]/dist)
     
     data={'train':None,'val':None}
     dataset={'train':None,'val':None}
     dataloader={'train':None,'val':None}
-    datalist, data['val'] = \
+    data['train'], data['val'] = \
         train_test_split(df.values.tolist(), test_size=0.1, random_state=42)  
-    
+    '''
     data['train']=[]
     for i in range(len(datalist)):
         r=df.iloc[i]
         diag=r['diagnosis']
         for j in range(int(multi[diag])):
             data['train'].append(r.values.tolist())
-    
+    '''
     
     print(len(data['train']),len(data['val']))
     image_folder = os.path.join(args.root,'train_image')
@@ -152,22 +160,25 @@ def main():
             batch_size=args.batch_size,shuffle=True,
             num_workers=args.workers,pin_memory=True)
             for x in ['train', 'val']}
+    if args.model in pretrainedmodels.__dict__.keys():
+        model = pretrainedmodels.__dict__[args.model](num_classes=1000, pretrained='imagenet')
+        model.avg_pool = nn.AdaptiveAvgPool2d(1)
+        model.last_linear = nn.Sequential( 
+                nn.BatchNorm1d(1056),
+                nn.Dropout(p=0.25),
+                nn.Linear(in_features=1056, out_features=400, bias=True),
+                nn.ReLU(),
+                nn.BatchNorm1d(400),
+                nn.Dropout(p=0.25),
+                nn.Linear(in_features=400, out_features=60, bias=True),
+                nn.ReLU(),
+                nn.BatchNorm1d(60),
+                nn.Dropout(p=0.25),
+                nn.Linear(in_features=60, out_features=1, bias=True),
+                )
+    elif args.model == 'nasnetv2':
+        model = nasnetv2()
     
-    model = pretrainedmodels.__dict__[args.model](num_classes=1000, pretrained='imagenet')
-    model.avg_pool = nn.AdaptiveAvgPool2d(1)
-    model.last_linear = nn.Sequential( 
-            nn.BatchNorm1d(1056),
-            nn.Dropout(p=0.25),
-            nn.Linear(in_features=1056, out_features=400, bias=True),
-            nn.ReLU(),
-            nn.BatchNorm1d(400),
-            nn.Dropout(p=0.25),
-            nn.Linear(in_features=400, out_features=60, bias=True),
-            nn.ReLU(),
-            nn.BatchNorm1d(60),
-            nn.Dropout(p=0.25),
-            nn.Linear(in_features=60, out_features=1, bias=True),
-            )
     #print(model)
     model = model.to(device)
     if torch.cuda.is_available():
@@ -180,7 +191,8 @@ def main():
         model.load_state_dict(torch.load(weight_file,
                                  map_location=lambda storage, loc: storage))    
 
-    criterion = nn.MSELoss()
+    #criterion = nn.MSELoss()
+    criterion = weighted_mse(rev_dist);
     optimizer = optim.SGD(model.parameters(),lr=args.lr, 
                           momentum=0.9, weight_decay=args.weight_decay)
     scheduler = MultiStepLR(optimizer, milestones=[16,25,30], gamma=0.1)
@@ -217,8 +229,7 @@ def main():
                 num += batch
                 loss = loss.item() 
                 running_loss += loss * inputs.size(0)
-                p=outputs.round().long()
-                propose=(p>=0).long()*p-(p>=4).long()*(p-4)
+                propose=outputs.round().clamp(0,4)
                 correct = (propose==targets).sum().item()
                 acc = correct/batch*100
                 running_correct +=correct
