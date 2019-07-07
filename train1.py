@@ -136,7 +136,7 @@ def main():
     train_csv=os.path.join(args.root, 'train.csv')
     df  = pd.read_csv(train_csv)
     dist= df.groupby('diagnosis').count().values.reshape(5)
-    rev_dist= torch.pow(torch.tensor(dist[0]/dist),1/3)
+    rev_dist= torch.pow(torch.tensor(dist[0]/dist,dtype=torch.float),1/3)
     
     data={'train':None,'val':None}
     dataset={'train':None,'val':None}
@@ -157,7 +157,7 @@ def main():
     dataset={x: APTOSDataset(image_folder, x, data[x], transform[x]) 
             for x in ['train', 'val']}
     dataloader={x: torch.utils.data.DataLoader(dataset[x],
-            batch_size=args.batch,shuffle=True,
+            batch_size=args.batch,shuffle=(x=='train'),
             num_workers=args.workers,pin_memory=True)
             for x in ['train', 'val']}
     if args.model in pretrainedmodels.__dict__.keys():

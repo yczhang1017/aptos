@@ -570,7 +570,6 @@ class NASNetAMobile(nn.Module):
         
         self.reduction_cell_2 = ReductionCell1(in_channels_left=24*filters, out_channels_left=8*filters, # 24, 8
                                                in_channels_right=24*filters, out_channels_right=8*filters) # 24, 8
-        
         self.cell_18 = FirstCell(in_channels_left=24*filters, out_channels_left=4*filters, # 12, 2
                                  in_channels_right=32*filters, out_channels_right=8*filters) # 16, 4
         self.cell_19 = NormalCell(in_channels_left=32*filters, out_channels_left=8*filters, # 16, 4
@@ -579,23 +578,34 @@ class NASNetAMobile(nn.Module):
                                   in_channels_right=48*filters, out_channels_right=8*filters) # 24, 4
         self.cell_21 = NormalCell(in_channels_left=48*filters, out_channels_left=8*filters, # 24, 4
                                   in_channels_right=48*filters, out_channels_right=8*filters) # 24, 4
-
+        
+        self.reduction_cell_3 = ReductionCell1(in_channels_left=48*filters, out_channels_left=16*filters, # 24, 8
+                                               in_channels_right=48*filters, out_channels_right=16*filters) # 24, 8
+        self.cell_24 = FirstCell(in_channels_left=48*filters, out_channels_left=8*filters, # 12, 2
+                                 in_channels_right=64*filters, out_channels_right=16*filters) # 16, 4
+        self.cell_25 = NormalCell(in_channels_left=64*filters, out_channels_left=16*filters, # 16, 4
+                                  in_channels_right=96*filters, out_channels_right=16*filters) # 24, 4
+        self.cell_26 = NormalCell(in_channels_left=96*filters, out_channels_left=16*filters, # 24, 4
+                                  in_channels_right=96*filters, out_channels_right=16*filters) # 24, 4
+        self.cell_27 = NormalCell(in_channels_left=96*filters, out_channels_left=16*filters, # 24, 4
+                                  in_channels_right=96*filters, out_channels_right=16*filters) # 24, 4
+        
         self.relu = nn.ReLU()
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
         self.dropout = nn.Dropout()
         #self.last_linear = nn.Linear(48*filters, self.num_classes)
         self.linear = nn.Sequential( 
-            nn.BatchNorm1d(48*filters),
+            nn.BatchNorm1d(96*filters),
             nn.Dropout(p=0.25),
-            nn.Linear(in_features=48*filters, out_features=12*filters),
+            nn.Linear(in_features=96*filters, out_features=12*filters),
             nn.ReLU(),
             nn.BatchNorm1d(12*filters),
             nn.Dropout(p=0.25),
-            nn.Linear(in_features=12*filters, out_features=2*filters),
+            nn.Linear(in_features=12*filters, out_features=filters),
             nn.ReLU(),
-            nn.BatchNorm1d(2*filters),
+            nn.BatchNorm1d(filters),
             nn.Dropout(p=0.25),
-            nn.Linear(in_features=2*filters, out_features=self.num_classes),
+            nn.Linear(in_features=filters, out_features=self.num_classes),
             )
         
     def features(self, input):
@@ -628,8 +638,14 @@ class NASNetAMobile(nn.Module):
         x_cell_19 = self.cell_19(x_cell_18, x_reduction_cell_2)
         x_cell_20 = self.cell_20(x_cell_19, x_cell_18)
         x_cell_21 = self.cell_21(x_cell_20, x_cell_19)
-
-        return x_cell_21
+        
+        x_reduction_cell_3 = self.reduction_cell_3(x_cell_21, x_cell_20)
+        x_cell_24 = self.cell_24(x_reduction_cell_3, x_cell_21)
+        x_cell_25 = self.cell_25(x_cell_24, x_reduction_cell_3)
+        x_cell_26 = self.cell_26(x_cell_25, x_cell_24)
+        x_cell_27 = self.cell_27(x_cell_26, x_cell_25)
+        
+        return x_cell_27
     
     def scores(self, input):
         x = self.features(input)
