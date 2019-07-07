@@ -28,7 +28,7 @@ parser = argparse.ArgumentParser(
     description='train a model')
 parser.add_argument('--root', default='./',
                     type=str, help='directory of the data')
-parser.add_argument('--batch_size', default=32, type=int,
+parser.add_argument('--batch', default=16, type=int,
                     help='Batch size for training')
 parser.add_argument('--workers', default=4, type=int,
                     help='Number of workers used in dataloading')
@@ -128,7 +128,7 @@ class weighted_mse(nn.Module):
         super(weighted_mse, self).__init__()
         self.weight=weight
     def forward(self, inputs, targets):
-        return torch.mean(self.weight[targets]*(inputs-targets)*(inputs-targets))
+        return torch.mean(self.weight[targets.long()]*(inputs-targets)*(inputs-targets))
     
     
     

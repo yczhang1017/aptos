@@ -630,7 +630,14 @@ class NASNetAMobile(nn.Module):
         x_cell_21 = self.cell_21(x_cell_20, x_cell_19)
 
         return x_cell_21
-
+    
+    def scores(self, input):
+        x = self.features(input)
+        x = self.relu(x)
+        x = self.avg_pool(x)
+        x = x.view(x.size(0), -1)
+        return x
+        
     def logits(self, features):
         x = self.relu(features)
         x = self.avg_pool(x)
@@ -640,8 +647,11 @@ class NASNetAMobile(nn.Module):
         return x
 
     def forward(self, input):
-        x = self.features(input)
-        x = self.logits(x)
+        #x = self.features(input)
+        #x = self.logits(x)
+        x = self.scores(input)
+        x = self.dropout(x)
+        x = self.linear(x)
         return x
 
 
