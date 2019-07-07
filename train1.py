@@ -157,7 +157,7 @@ def main():
     dataset={x: APTOSDataset(image_folder, x, data[x], transform[x]) 
             for x in ['train', 'val']}
     dataloader={x: torch.utils.data.DataLoader(dataset[x],
-            batch_size=args.batch_size,shuffle=True,
+            batch_size=args.batch,shuffle=True,
             num_workers=args.workers,pin_memory=True)
             for x in ['train', 'val']}
     if args.model in pretrainedmodels.__dict__.keys():
