@@ -28,7 +28,7 @@ parser = argparse.ArgumentParser(
     description='train a model')
 parser.add_argument('--root', default='./',
                     type=str, help='directory of the data')
-parser.add_argument('--batch', default=32, type=int,
+parser.add_argument('--batch', default=8, type=int,
                     help='Batch size for training')
 parser.add_argument('--workers', default=4, type=int,
                     help='Number of workers used in dataloading')
@@ -164,17 +164,17 @@ def main():
         model = pretrainedmodels.__dict__[args.model](num_classes=1000, pretrained='imagenet')
         model.avg_pool = nn.AdaptiveAvgPool2d(1)
         model.last_linear = nn.Sequential( 
-                nn.BatchNorm1d(1056),
+                nn.BatchNorm1d(4320),
                 nn.Dropout(p=0.25),
-                nn.Linear(in_features=1056, out_features=400, bias=True),
+                nn.Linear(in_features=4320, out_features=600, bias=True),
                 nn.ReLU(),
-                nn.BatchNorm1d(400),
+                nn.BatchNorm1d(600),
                 nn.Dropout(p=0.25),
-                nn.Linear(in_features=400, out_features=60, bias=True),
+                nn.Linear(in_features=600, out_features=100, bias=True),
                 nn.ReLU(),
-                nn.BatchNorm1d(60),
+                nn.BatchNorm1d(100),
                 nn.Dropout(p=0.25),
-                nn.Linear(in_features=60, out_features=1, bias=True),
+                nn.Linear(in_features=100, out_features=1, bias=True),
                 )
     elif args.model == 'nasnetv2':
         model = nasnetv2()
