@@ -15,7 +15,7 @@ import argparse
 import pretrainedmodels
 from sklearn.model_selection import train_test_split
 
-from nasnet import nasnetv2
+from nasnetv2 import nasnetv2
 #import torch.nn.functional as F
 
 #from torch.autograd import Variable
@@ -42,11 +42,11 @@ parser.add_argument('--weight_decay', default=5e-4, type=float,
                     help='Weight decay')
 parser.add_argument('--resume_epoch', default=0, type=int,
                     help='epoch number to be resumed at')
-parser.add_argument('--model', default='nasnetv2', type=str,
+parser.add_argument('--model', default='pnasnet5large', type=str,
                     help='model name')
 parser.add_argument('--checkpoint', default=None, type=str,
                     help='Checkpoint state_dict file to resume training from') 
-parser.add_argument('--size', default=384, type=int,
+parser.add_argument('--size', default=224, type=int,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
