@@ -126,7 +126,7 @@ class M4Loss(nn.Module):
 class weighted_mse(nn.Module):
     def __init__(self, weight):
         super(weighted_mse, self).__init__()
-        self.weight=weight
+        self.weight=weight.float().to(device)
     def forward(self, inputs, targets):
         return torch.mean(self.weight[targets.long()]*(inputs-targets)*(inputs-targets))
     
