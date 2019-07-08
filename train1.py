@@ -135,7 +135,7 @@ def main():
     train_csv=os.path.join(args.root, 'train.csv')
     df  = pd.read_csv(train_csv)
     dist= df.groupby('diagnosis').count().values.reshape(5)
-    #rev_dist= torch.pow(torch.tensor(dist[0]/dist,dtype=torch.float),1/5)
+    rev_dist= torch.pow(torch.tensor(dist[0]/dist,dtype=torch.float),1/3)
     
     data={'train':None,'val':None}
     dataset={'train':None,'val':None}
@@ -191,9 +191,9 @@ def main():
                                  map_location=lambda storage, loc: storage))    
 
     #criterion = nn.MSELoss()
-    weight=torch.tensor([1, 1.2, 1.3, 1.4, 1.8],dtype=torch.float)
-    print(weight)
-    criterion = weighted_mse(weight);
+    #weight=torch.tensor([1, 1.2, 1.3, 1.4, 1.8],dtype=torch.float)
+    print(rev_dist)
+    criterion = weighted_mse(rev_dist);
     optimizer = optim.SGD(model.parameters(),lr=args.lr, 
                           momentum=0.9, weight_decay=args.weight_decay)
     scheduler = MultiStepLR(optimizer, milestones=[16,24,32,40], gamma=0.1)
