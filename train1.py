@@ -135,7 +135,7 @@ def main():
     train_csv=os.path.join(args.root, 'train.csv')
     df  = pd.read_csv(train_csv)
     dist= df.groupby('diagnosis').count().values.reshape(5)
-    rev_dist= torch.pow(torch.tensor(dist[0]/dist,dtype=torch.float),1/3)
+    rev_dist= torch.pow(torch.tensor(dist[0]/dist,dtype=torch.float),1/5)
     
     data={'train':None,'val':None}
     dataset={'train':None,'val':None}
