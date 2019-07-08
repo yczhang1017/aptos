@@ -16,6 +16,7 @@ import pretrainedmodels
 from sklearn.model_selection import train_test_split
 
 from nasnetv2 import nasnetv2
+from sklearn.metrics import cohen_kappa_score, confusion_matrix
 #import torch.nn.functional as F
 
 #from torch.autograd import Variable
@@ -79,7 +80,32 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
     
-    
+
+def histogram(ratings, min_rating=None, max_rating=None):
+    """
+    Returns the counts of each type of rating that a rater made
+    """
+    if min_rating is None:
+        min_rating = min(ratings)
+    if max_rating is None:
+        max_rating = max(ratings)
+    num_ratings = int(max_rating - min_rating + 1)
+    hist_ratings = [0 for x in range(num_ratings)]
+    for r in ratings:
+        hist_ratings[r - min_rating] += 1
+    return hist_ratings
+
+def hist_matrix(y1,y2, low=0, high=4):
+    hist1 = histogram(y1, low, high)
+    hist2 = histogram(y2, low, high)
+    num_ratings = int(high - low + 1)
+    np.zeros((num_ratings, num_ratings))
+    for i in range(num_ratings):
+        for j in range(num_ratings):
+            res = hist1[i] * hist2[j]
+    return res
+
+
 class APTOSDataset(torch.utils.data.Dataset):
     def __init__(self, root, phase, data ,transform):
         self.root= root
@@ -126,9 +152,23 @@ class weighted_mse(nn.Module):
     def __init__(self, weight):
         super(weighted_mse, self).__init__()
         self.weight=weight.float().to(device)
-    def forward(self, inputs, targets):
-        return torch.mean(self.weight[targets.long()]*(inputs-targets)*(inputs-targets))
-    
+    def forward(self, output, target):
+        truth=target.long()
+        return torch.mean(self.weight[truth]*(output-target)*(output-target))
+
+class quadratic_weighted_kappa(nn.Module):
+    def __init__(self, m1, m2):
+        super(weighted_mse, self).__init__()
+        m1=torch.tensor(m1,dtype=torch.float)
+        m2=torch.tensor(m2,dtype=torch.float)
+        self.m1=(m1/m1.sum()).to(device)
+        self.m2=(m2/m2.sum()).to(device)
+    def forward(self, output, target):
+        truth=target.long()
+        predict=output.detach().round().long().clamp(0,4)
+        numerator = torch.sum(self.m1[truth,predict]*(output-target)*(output-target))
+        denominator = torch.sum(self.m2[truth,predict]*(output-target)*(output-target))
+        return 1-  numerator/denominator
     
     
 def main():
@@ -192,8 +232,10 @@ def main():
 
     #criterion = nn.MSELoss()
     #weight=torch.tensor([1, 1.2, 1.3, 1.4, 1.8],dtype=torch.float)
-    print(rev_dist)
-    criterion = weighted_mse(rev_dist);
+    rev_dist[-1]=rev_dist.max()
+    weight=rev_dist
+    print(weight)
+    criterion = weighted_mse(weight);
     optimizer = optim.SGD(model.parameters(),lr=args.lr, 
                           momentum=0.9, weight_decay=args.weight_decay)
     scheduler = MultiStepLR(optimizer, milestones=[16,24,32,40], gamma=0.1)
@@ -214,6 +256,9 @@ def main():
             num = 0
             running_loss = 0
             running_correct = 0
+            predict=[]
+            truth=[]
+            
             for inputs,targets in dataloader[phase]:
                 t1 = time.time()
                 batch = inputs.size(0)
@@ -236,15 +281,38 @@ def main():
                 running_correct +=correct
                 t2 = time.time()
                 if nb %args.print ==0:
-                    print('|'.join(str(x) for x in propose.cpu().tolist()))
-                    print('|'.join(str(x) for x in targets.cpu().tolist()))
+                    p=propose.cpu().tolist()
+                    t=targets.cpu().tolist()
+                    predict.append(p)
+                    truth.append(t)
+                    print('|'.join(str(x) for x in p))
+                    print('|'.join(str(x) for x in t))
                     print('n:{:d}, l:{:.4f}|{:.4f}, a:{:.4f}|{:.4f}, t:{:.4f}' \
                           .format(num, loss, running_loss/num, acc, running_correct/num*100, t2-t1))
             
+            
+            print('num:', num, len(truth))
+            cm = confusion_matrix(truth, predict, labels=[0,1,2,3,4])
+            hm = hist_matrix(truth,predict,0,4)
+            kappa = cohen_kappa_score(truth, predict, labels=[0,1,2,3,4])
+            if np.any(hm==0):
+                print('quadratic_weighted_kappa')
+                criterion=weighted_mse(weight)
+            else:
+                print('quadratic_weighted_kappa')
+                criterion=quadratic_weighted_kappa(cm,hm)
+                
             print('='*5,phase,'='*5)
-            print('n:{:d}, l:{:.4f}, a:{:.4f}, t:{:.4f}' \
-                  .format(num, running_loss/num, running_correct/num*100, t2-t1))
+            print("Confusion matrix")
+            print(cm)
+            print("Hist matrix")
+            print(hm)
+            print('n:{:d}, l:{:.4f}, a:{:.4f}, k:{:.4f}, t:{:.4f}' \
+                  .format(num, running_loss/num, running_correct/num*100, kappa, t2-t1))
+            
             print('='*15)
+            
+            
             if phase == 'val':
                 torch.save(model.state_dict(),
                           os.path.join(args.save_folder,'out_'+str(epoch+1)+'.pth'))
