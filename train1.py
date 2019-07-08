@@ -33,7 +33,7 @@ parser.add_argument('--batch', default=16, type=int,
                     help='Batch size for training')
 parser.add_argument('--workers', default=4, type=int,
                     help='Number of workers used in dataloading')
-parser.add_argument('--lr', '--learning-rate', default=1e-4, type=float,
+parser.add_argument('--lr', '--learning-rate', default=1e-3, type=float,
                     help='initial learning rate')
 parser.add_argument('-e','--epochs', default=48, type=int,
                     help='number of epochs to train')
@@ -51,7 +51,7 @@ parser.add_argument('--size', default=224, type=int,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
-parser.add_argument('--loss', default='kappa',  choices=['mse', 'wmse','kappa'], type=str,
+parser.add_argument('--loss', default='hubber',  choices=['mse', 'wmse','hubber'], type=str,
                     help='type of loss')
 
 args = parser.parse_args()
@@ -149,25 +149,6 @@ class weighted_mse(nn.Module):
         truth=target.long()
         return torch.mean(self.weight[truth]*(output-target)*(output-target))
 
-class quadratic_weighted_kappa(nn.Module):
-    def __init__(self, m1, m2):
-        super(quadratic_weighted_kappa, self).__init__()
-        m1 = torch.tensor(m1,dtype=torch.float)
-        m2 = torch.tensor(m2,dtype=torch.float)
-        m1 = m1/m1.sum()
-        m2 = m2/m2.sum()
-        for i in range(len(m1)):
-           m1[i,i]=0
-           m2[i,i]=0
-        self.m1=m1.to(device)
-        self.m2=m2.to(device)
-    def forward(self, output, target):
-        truth=target.long()
-        predict=output.detach().round().long().clamp(0,4)
-        numerator = torch.sum(self.m1[truth,predict]*(output-target)*(output-target))
-        denominator = torch.sum(self.m2[truth,predict]*(output-target)*(output-target))
-        return numerator/denominator*10
-    
     
 def main():
     train_csv=os.path.join(args.root, 'train.csv')
@@ -197,6 +178,17 @@ def main():
             batch_size=args.batch,shuffle=(x=='train'),
             num_workers=args.workers,pin_memory=True)
             for x in ['train', 'val']}
+    
+    if args.loss == 'mse':
+        criterion = nn.MSELoss()
+    elif args.loss == 'wmse':
+        rev_dist[-1]=rev_dist.max()
+        weight=rev_dist
+        print(weight)
+        criterion = weighted_mse(weight)
+    elif args.loss== 'huber':
+        criterion = nn.SmoothL1Loss()
+    
     if args.model in pretrainedmodels.__dict__.keys():
         model = pretrainedmodels.__dict__[args.model](num_classes=1000, pretrained='imagenet')
         model.avg_pool = nn.AdaptiveAvgPool2d(1)
@@ -227,31 +219,7 @@ def main():
         weight_file=os.path.join(args.root,args.checkpoint)
         model.load_state_dict(torch.load(weight_file,
                                  map_location=lambda storage, loc: storage))    
-
-    if args.loss == 'mse':
-        criterion = nn.MSELoss()
-    elif args.loss == 'wmse':
-        rev_dist[-1]=rev_dist.max()
-        weight=rev_dist
-        print(weight)
-        criterion = weighted_mse(weight)
-    elif args.loss == 'kappa':
-        cm=np.array([[1469, 154,   8,   0,   0],
-                     [  23, 192, 109,  11,   1],
-                     [  11, 129, 526, 218,   7],
-                     [   0,   2,  46, 103,  24],
-                     [   0,   5,  39, 147,  71]])
-        ht=np.array([1631, 336, 891, 175, 262])
-        hp=np.array([1503, 482, 728, 479, 103])
-        hm = np.outer(ht,hp)/np.sum(hp)
-        print("Confusion matrix")
-        print(cm)
-        print("Hist matrix")
-        print(ht)
-        print(hp)
-        print(hm)
-        criterion = quadratic_weighted_kappa(cm,hm)
-        
+ 
     optimizer = optim.SGD(model.parameters(),lr=args.lr, 
                           momentum=0.9, weight_decay=args.weight_decay)
     scheduler = MultiStepLR(optimizer, milestones=[16,24,32,40], gamma=0.1)
@@ -311,7 +279,7 @@ def main():
             cm = confusion_matrix(truth, predict, labels=[0,1,2,3,4])
             ht=histogram(truth,0,4)
             hp=histogram(predict,0,4)
-            hm = np.outer(ht,hp)/np.sum(hp)
+            hm = np.outer(ht,hp)/np.float(num)
             kappa = cohen_kappa_score(truth, predict, labels=[0,1,2,3,4])
             
             if args.loss and phase=='train':
