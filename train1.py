@@ -41,7 +41,7 @@ parser.add_argument('-s','--save_folder', default='save/', type=str,
                     help='Dir to save results')
 parser.add_argument('--weight_decay', default=5e-4, type=float,
                     help='Weight decay')
-parser.add_argument('--resume_epoch', default=0, type=int,
+parser.add_argument('--resume', default=0, type=int,
                     help='epoch number to be resumed at')
 parser.add_argument('--model', default='pnasnet5large', type=str,
                     help='model name')
@@ -202,8 +202,9 @@ def main():
         criterion = nn.SmoothL1Loss()
         
     elif args.loss== 'l1_cut':
-        weight = torch.pow(torch.tensor(dist[0]/dist,dtype=torch.float),1/4)
-        weight[-1]=weight.max()
+        #weight = torch.pow(torch.tensor(dist[0]/dist,dtype=torch.float),1/4)
+        #weight[-1]=weight.max()
+        weight = torch.tensor([1,1.4,1.2,2,3])
         criterion = L1_cut_loss(weight)
     
     if args.model in pretrainedmodels.__dict__.keys():
@@ -232,7 +233,7 @@ def main():
         cudnn.benchmark = True    
     if args.checkpoint:
         print('Resuming training from epoch {}, loading {}...'
-              .format(args.resume_epoch,args.checkpoint))
+              .format(args.resume,args.checkpoint))
         weight_file=os.path.join(args.root,args.checkpoint)
         model.load_state_dict(torch.load(weight_file,
                                  map_location=lambda storage, loc: storage))    
@@ -241,9 +242,9 @@ def main():
                           momentum=0.9, weight_decay=args.weight_decay)
     scheduler = MultiStepLR(optimizer, milestones=[16,24,32,40], gamma=0.1)
    
-    for i in range(args.resume_epoch):
+    for i in range(args.resume):
         scheduler.step()
-    for epoch in range(args.resume_epoch,args.epochs):
+    for epoch in range(args.resume,args.epochs):
         print('Epoch {}/{}'.format(epoch+1, args.epochs))
         print('-' * 10)
         for phase in ['train','val']:
