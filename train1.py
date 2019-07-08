@@ -284,12 +284,13 @@ def main():
                 correct = (propose==targets).sum().item()
                 acc = correct/batch*100
                 running_correct +=correct
+                p=propose.cpu().tolist()
+                t=targets.cpu().tolist()
+                predict+=p
+                truth+=t
                 t2 = time.time()
                 if nb %args.print ==0:
-                    p=propose.cpu().tolist()
-                    t=targets.cpu().tolist()
-                    predict+=p
-                    truth+=t
+                    
                     print('|'.join(str(x) for x in p))
                     print('|'.join(str(x) for x in t))
                     print('n:{:d}, l:{:.4f}|{:.4f}, a:{:.4f}|{:.4f}, t:{:.4f}' \
