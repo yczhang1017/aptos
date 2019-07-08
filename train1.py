@@ -150,17 +150,19 @@ class weighted_mse(nn.Module):
         return torch.mean(self.weight[truth]*(input-target)*(input-target))
     
 class L1_cut_loss(nn.Module):
-    def __init__(self):
+    def __init__(self, weight):
         super(L1_cut_loss, self).__init__()
+        self.weight=weight.float().to(device)
     def forward(self, input, target):
-        return f.relu(torch.abs(input-target)-0.5).mean()
+        truth=target.long()
+        loss=self.weight[truth]*f.relu(torch.abs(input-target)-0.5)
+        return loss.mean()
 
     
 def main():
     train_csv=os.path.join(args.root, 'train.csv')
     df  = pd.read_csv(train_csv)
     dist= df.groupby('diagnosis').count().values.reshape(5)
-    rev_dist= torch.pow(torch.tensor(dist[0]/dist,dtype=torch.float),1/3)
     
     data={'train':None,'val':None}
     dataset={'train':None,'val':None}
@@ -168,6 +170,7 @@ def main():
     data['train'], data['val'] = \
         train_test_split(df.values.tolist(), test_size=0.1, random_state=42)  
     '''
+    multi= torch.pow(torch.tensor(dist[0]/dist,dtype=torch.float),1/3)
     data['train']=[]
     for i in range(len(datalist)):
         r=df.iloc[i]
@@ -189,8 +192,8 @@ def main():
         criterion = nn.MSELoss()
     
     elif args.loss == 'wmse':
-        rev_dist[-1]=rev_dist.max()
-        weight=rev_dist
+        weight = torch.pow(torch.tensor(dist[0]/dist,dtype=torch.float),1/3)
+        weight[-1]=weight.max()
         print(weight)
         criterion = weighted_mse(weight)
         
@@ -198,7 +201,9 @@ def main():
         criterion = nn.SmoothL1Loss()
         
     elif args.loss== 'l1_cut':
-        criterion = L1_cut_loss()
+        weight = torch.pow(torch.tensor(dist[0]/dist,dtype=torch.float),1/4)
+        weight[-1]=weight.max()
+        criterion = L1_cut_loss(weight)
     
     if args.model in pretrainedmodels.__dict__.keys():
         model = pretrainedmodels.__dict__[args.model](num_classes=1000, pretrained='imagenet')
