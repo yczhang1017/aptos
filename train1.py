@@ -61,7 +61,7 @@ std=[0.2392, 0.1326, 0.0470]
 transform= { 
  'train':transforms.Compose([
      transforms.RandomResizedCrop(args.size,scale=(0.2, 1.0), ratio=(0.9, 1.11111)),
-     transforms.ColorJitter(0.1,0.1,0.1,0.04),
+     transforms.ColorJitter(0.3,0.1,0.1,0.04),
      transforms.RandomHorizontalFlip(),
      transforms.RandomVerticalFlip(),
      transforms.ToTensor(),
