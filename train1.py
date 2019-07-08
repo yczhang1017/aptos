@@ -158,7 +158,7 @@ class weighted_mse(nn.Module):
 
 class quadratic_weighted_kappa(nn.Module):
     def __init__(self, m1, m2):
-        super(weighted_mse, self).__init__()
+        super(quadratic_weighted_kappa, self).__init__()
         m1 = torch.tensor(m1,dtype=torch.float)
         m2 = torch.tensor(m2,dtype=torch.float)
         m1 = m1/m1.sum()
