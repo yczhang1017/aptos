@@ -159,10 +159,15 @@ class weighted_mse(nn.Module):
 class quadratic_weighted_kappa(nn.Module):
     def __init__(self, m1, m2):
         super(weighted_mse, self).__init__()
-        m1=torch.tensor(m1,dtype=torch.float)
-        m2=torch.tensor(m2,dtype=torch.float)
-        self.m1=(m1/m1.sum()).to(device)
-        self.m2=(m2/m2.sum()).to(device)
+        m1 = torch.tensor(m1,dtype=torch.float)
+        m2 = torch.tensor(m2,dtype=torch.float)
+        m1 = m1/m1.sum()
+        m2 = m2/m2.sum()
+        for i in range(len(m1)):
+           m1[i,i]=0
+           m2[i,i]=0
+        self.m1=m1.to(device)
+        self.m2=m2.to(device)
     def forward(self, output, target):
         truth=target.long()
         predict=output.detach().round().long().clamp(0,4)
@@ -283,13 +288,12 @@ def main():
                 if nb %args.print ==0:
                     p=propose.cpu().tolist()
                     t=targets.cpu().tolist()
-                    predict.append(p)
-                    truth.append(t)
+                    predict+=p
+                    truth+=t
                     print('|'.join(str(x) for x in p))
                     print('|'.join(str(x) for x in t))
                     print('n:{:d}, l:{:.4f}|{:.4f}, a:{:.4f}|{:.4f}, t:{:.4f}' \
                           .format(num, loss, running_loss/num, acc, running_correct/num*100, t2-t1))
-            
             
             print('num:', num, len(truth))
             cm = confusion_matrix(truth, predict, labels=[0,1,2,3,4])
