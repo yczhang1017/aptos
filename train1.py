@@ -51,7 +51,7 @@ parser.add_argument('--size', default=224, type=int,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
-parser.add_argument('--loss', default='hubber',  choices=['mse', 'wmse','hubber'], type=str,
+parser.add_argument('--loss', default='huber',  choices=['mse', 'wmse','huber'], type=str,
                     help='type of loss')
 
 args = parser.parse_args()
