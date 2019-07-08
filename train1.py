@@ -17,6 +17,7 @@ from sklearn.model_selection import train_test_split
 import torch.nn.functional as f
 from nasnetv2 import nasnetv2
 from sklearn.metrics import cohen_kappa_score, confusion_matrix
+from kappas import quadratic_weighted_kappa
 #import torch.nn.functional as F
 
 #from torch.autograd import Variable
@@ -194,7 +195,7 @@ def main():
     elif args.loss == 'wmse':
         #weight = torch.pow(torch.tensor(dist[0]/dist,dtype=torch.float),0.4)
         #weight[-1]=weight.max()
-        weight = torch.tensor([1,1.4,1.2,2,3])
+        weight = torch.tensor([1,1.4,1.2,3,5])
         print(weight)
         criterion = weighted_mse(weight)
         
@@ -204,7 +205,7 @@ def main():
     elif args.loss== 'l1_cut':
         #weight = torch.pow(torch.tensor(dist[0]/dist,dtype=torch.float),1/4)
         #weight[-1]=weight.max()
-        weight = torch.tensor([1,1.4,1.2,2,3])
+        weight = torch.tensor([1,1.4,1.2,3,5])
         criterion = L1_cut_loss(weight)
     
     if args.model in pretrainedmodels.__dict__.keys():
@@ -299,6 +300,7 @@ def main():
             hp=histogram(predict,0,4)
             hm = np.outer(ht,hp)/np.float(num)
             kappa = cohen_kappa_score(truth, predict, labels=[0,1,2,3,4])
+            kappa2= quadratic_weighted_kappa(truth, predict, 0, 4)
             print('='*5,phase,'='*5)
             print("Confusion matrix")
             print(cm)
@@ -306,8 +308,8 @@ def main():
             print(ht)
             print(hp)
             print(hm)
-            print('n:{:d}, l:{:.4f}, a:{:.4f}, k:{:.4f}, t:{:.4f}' \
-                  .format(num, running_loss/num, running_correct/num*100, kappa, t2-t1))
+            print('n:{:d}, l:{:.4f}, a:{:.4f}, k:{:.4f}|{:.4f}, t:{:.4f}' \
+                  .format(num, running_loss/num, running_correct/num*100, kappa, kappa2, t2-t1))
             
             print('='*15)
             

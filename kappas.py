@@ -1,5 +1,4 @@
 #! /usr/bin/env python2.7
-
 import numpy as np
 
 
@@ -218,6 +217,3 @@ def weighted_mean_quadratic_weighted_kappa(solution, submission):
     weights = [group[1]["essay_weight"].irow(0) for group in groups]
     return mean_quadratic_weighted_kappa(kappas, weights=weights)
 
-
-a=quadratic_weighted_kappa([0,2,3,1,1],[0,2,4,1,1])
-print(a)
