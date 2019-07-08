@@ -14,7 +14,7 @@ import time
 import argparse
 import pretrainedmodels
 from sklearn.model_selection import train_test_split
-
+import torch.nn.functional as f
 from nasnetv2 import nasnetv2
 from sklearn.metrics import cohen_kappa_score, confusion_matrix
 #import torch.nn.functional as F
@@ -33,7 +33,7 @@ parser.add_argument('--batch', default=16, type=int,
                     help='Batch size for training')
 parser.add_argument('--workers', default=4, type=int,
                     help='Number of workers used in dataloading')
-parser.add_argument('--lr', '--learning-rate', default=1e-3, type=float,
+parser.add_argument('--lr', '--learning-rate', default=1e-4, type=float,
                     help='initial learning rate')
 parser.add_argument('-e','--epochs', default=48, type=int,
                     help='number of epochs to train')
@@ -51,7 +51,7 @@ parser.add_argument('--size', default=224, type=int,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
-parser.add_argument('--loss', default='huber',  choices=['mse', 'wmse','huber'], type=str,
+parser.add_argument('--loss', default='l1c',  choices=['mse', 'wmse','huber','l1c'], type=str,
                     help='type of loss')
 
 args = parser.parse_args()
@@ -145,9 +145,15 @@ class weighted_mse(nn.Module):
     def __init__(self, weight):
         super(weighted_mse, self).__init__()
         self.weight=weight.float().to(device)
-    def forward(self, output, target):
+    def forward(self, input, target):
         truth=target.long()
-        return torch.mean(self.weight[truth]*(output-target)*(output-target))
+        return torch.mean(self.weight[truth]*(input-target)*(input-target))
+    
+class L1_cut_loss(nn.Module):
+    def __init__(self):
+        super(L1_cut_loss, self).__init__()
+    def forward(self, input, target):
+        return f.relu(torch.abs(input-target)-0.5).mean()
 
     
 def main():
@@ -181,13 +187,18 @@ def main():
     
     if args.loss == 'mse':
         criterion = nn.MSELoss()
+    
     elif args.loss == 'wmse':
         rev_dist[-1]=rev_dist.max()
         weight=rev_dist
         print(weight)
         criterion = weighted_mse(weight)
+        
     elif args.loss== 'huber':
         criterion = nn.SmoothL1Loss()
+        
+    elif args.loss== 'L1_cut_loss':
+        criterion = L1_cut_loss()
     
     if args.model in pretrainedmodels.__dict__.keys():
         model = pretrainedmodels.__dict__[args.model](num_classes=1000, pretrained='imagenet')
@@ -281,11 +292,6 @@ def main():
             hp=histogram(predict,0,4)
             hm = np.outer(ht,hp)/np.float(num)
             kappa = cohen_kappa_score(truth, predict, labels=[0,1,2,3,4])
-            
-            if args.loss and phase=='train':
-                print('quadratic_weighted_kappa')
-                criterion=quadratic_weighted_kappa(cm,hm)
-            
             print('='*5,phase,'='*5)
             print("Confusion matrix")
             print(cm)
