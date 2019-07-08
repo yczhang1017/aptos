@@ -173,7 +173,7 @@ class quadratic_weighted_kappa(nn.Module):
         predict=output.detach().round().long().clamp(0,4)
         numerator = torch.sum(self.m1[truth,predict]*(output-target)*(output-target))
         denominator = torch.sum(self.m2[truth,predict]*(output-target)*(output-target))
-        return 1-  numerator/denominator
+        return numerator/denominator*10
     
     
 def main():
@@ -299,13 +299,14 @@ def main():
             cm = confusion_matrix(truth, predict, labels=[0,1,2,3,4])
             hm = hist_matrix(truth,predict,0,4)
             kappa = cohen_kappa_score(truth, predict, labels=[0,1,2,3,4])
+            '''
             if np.any(hm==0):
                 print('quadratic_weighted_kappa')
                 criterion=weighted_mse(weight)
             else:
                 print('quadratic_weighted_kappa')
                 criterion=quadratic_weighted_kappa(cm,hm)
-                
+            ''' 
             print('='*5,phase,'='*5)
             print("Confusion matrix")
             print(cm)
