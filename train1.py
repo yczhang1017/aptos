@@ -192,8 +192,9 @@ def main():
         criterion = nn.MSELoss()
     
     elif args.loss == 'wmse':
-        weight = torch.pow(torch.tensor(dist[0]/dist,dtype=torch.float),0.4)
-        weight[-1]=weight.max()
+        #weight = torch.pow(torch.tensor(dist[0]/dist,dtype=torch.float),0.4)
+        #weight[-1]=weight.max()
+        weight = torch.tensor([1,1.4,1.2,2,3])
         print(weight)
         criterion = weighted_mse(weight)
         
