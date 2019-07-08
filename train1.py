@@ -95,15 +95,6 @@ def histogram(ratings, min_rating=None, max_rating=None):
         hist_ratings[r - min_rating] += 1
     return hist_ratings
 
-def hist_matrix(y1,y2, low=0, high=4):
-    hist1 = histogram(y1, low, high)
-    hist2 = histogram(y2, low, high)
-    num_ratings = int(high - low + 1)
-    np.zeros((num_ratings, num_ratings))
-    for i in range(num_ratings):
-        for j in range(num_ratings):
-            res = hist1[i] * hist2[j]
-    return res
 
 
 class APTOSDataset(torch.utils.data.Dataset):
@@ -298,7 +289,9 @@ def main():
             
             print('num:', num, len(truth))
             cm = confusion_matrix(truth, predict, labels=[0,1,2,3,4])
-            hm = hist_matrix(truth,predict,0,4)/np.float(num)
+            ht=histogram(truth,0,4)
+            hp=histogram(predict,0,4)
+            hm = np.outer(ht,hp)/np.float(num)
             kappa = cohen_kappa_score(truth, predict, labels=[0,1,2,3,4])
             '''
             if np.any(hm==0):
