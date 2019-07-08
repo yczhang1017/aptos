@@ -298,7 +298,7 @@ def main():
             
             print('num:', num, len(truth))
             cm = confusion_matrix(truth, predict, labels=[0,1,2,3,4])
-            hm = hist_matrix(truth,predict,0,4)
+            hm = hist_matrix(truth,predict,0,4)/np.float(num)
             kappa = cohen_kappa_score(truth, predict, labels=[0,1,2,3,4])
             '''
             if np.any(hm==0):
