@@ -33,7 +33,7 @@ parser.add_argument('--batch', default=16, type=int,
                     help='Batch size for training')
 parser.add_argument('--workers', default=4, type=int,
                     help='Number of workers used in dataloading')
-parser.add_argument('--lr', '--learning-rate', default=2e-3, type=float,
+parser.add_argument('--lr', '--learning-rate', default=1e-4, type=float,
                     help='initial learning rate')
 parser.add_argument('-e','--epochs', default=48, type=int,
                     help='number of epochs to train')
@@ -51,6 +51,8 @@ parser.add_argument('--size', default=224, type=int,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
+parser.add_argument('--loss', default='kappa',  choices=['mse', 'wmse','kappa'], type=str,
+                    help='type of loss')
 
 args = parser.parse_args()
 
@@ -226,12 +228,30 @@ def main():
         model.load_state_dict(torch.load(weight_file,
                                  map_location=lambda storage, loc: storage))    
 
-    #criterion = nn.MSELoss()
-    #weight=torch.tensor([1, 1.2, 1.3, 1.4, 1.8],dtype=torch.float)
-    rev_dist[-1]=rev_dist.max()
-    weight=rev_dist
-    print(weight)
-    criterion = weighted_mse(weight);
+    if args.loss == 'mse':
+        criterion = nn.MSELoss()
+    elif args.loss == 'wmse':
+        rev_dist[-1]=rev_dist.max()
+        weight=rev_dist
+        print(weight)
+        criterion = weighted_mse(weight)
+    elif args.loss == 'kappa':
+        cm=np.array([[1469, 154,   8,   0,   0],
+                     [  23, 192, 109,  11,   1],
+                     [  11, 129, 526, 218,   7],
+                     [   0,   2,  46, 103,  24],
+                     [   0,   5,  39, 147,  71]])
+        ht=np.array([1631, 336, 891, 175, 262])
+        hp=np.array([1503, 482, 728, 479, 103])
+        hm = np.outer(ht,hp)/np.sum(hp)
+        print("Confusion matrix")
+        print(cm)
+        print("Hist matrix")
+        print(ht)
+        print(hp)
+        print(hm)
+        criterion = quadratic_weighted_kappa(cm,hm)
+        
     optimizer = optim.SGD(model.parameters(),lr=args.lr, 
                           momentum=0.9, weight_decay=args.weight_decay)
     scheduler = MultiStepLR(optimizer, milestones=[16,24,32,40], gamma=0.1)
@@ -291,16 +311,13 @@ def main():
             cm = confusion_matrix(truth, predict, labels=[0,1,2,3,4])
             ht=histogram(truth,0,4)
             hp=histogram(predict,0,4)
-            hm = np.outer(ht,hp)/np.float(num)
+            hm = np.outer(ht,hp)/np.sum(hp)
             kappa = cohen_kappa_score(truth, predict, labels=[0,1,2,3,4])
-            '''
-            if np.any(hm==0):
-                print('quadratic_weighted_kappa')
-                criterion=weighted_mse(weight)
-            else:
+            
+            if args.loss and phase=='train':
                 print('quadratic_weighted_kappa')
                 criterion=quadratic_weighted_kappa(cm,hm)
-            ''' 
+            
             print('='*5,phase,'='*5)
             print("Confusion matrix")
             print(cm)
