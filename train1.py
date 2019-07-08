@@ -305,6 +305,8 @@ def main():
             print("Confusion matrix")
             print(cm)
             print("Hist matrix")
+            print(ht)
+            print(hp)
             print(hm)
             print('n:{:d}, l:{:.4f}, a:{:.4f}, k:{:.4f}, t:{:.4f}' \
                   .format(num, running_loss/num, running_correct/num*100, kappa, t2-t1))
