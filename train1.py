@@ -51,7 +51,7 @@ parser.add_argument('--size', default=224, type=int,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
-parser.add_argument('--loss', default='l1c',  choices=['mse', 'wmse','huber','l1c'], type=str,
+parser.add_argument('--loss', default='l1_cut',  choices=['mse', 'wmse','huber','l1_cut'], type=str,
                     help='type of loss')
 
 args = parser.parse_args()
@@ -197,7 +197,7 @@ def main():
     elif args.loss== 'huber':
         criterion = nn.SmoothL1Loss()
         
-    elif args.loss== 'L1_cut_loss':
+    elif args.loss== 'l1_cut':
         criterion = L1_cut_loss()
     
     if args.model in pretrainedmodels.__dict__.keys():
