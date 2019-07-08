@@ -33,7 +33,7 @@ parser.add_argument('--batch', default=16, type=int,
                     help='Batch size for training')
 parser.add_argument('--workers', default=4, type=int,
                     help='Number of workers used in dataloading')
-parser.add_argument('--lr', '--learning-rate', default=1e-4, type=float,
+parser.add_argument('--lr', '--learning-rate', default=2e-3, type=float,
                     help='initial learning rate')
 parser.add_argument('-e','--epochs', default=48, type=int,
                     help='number of epochs to train')
@@ -51,7 +51,7 @@ parser.add_argument('--size', default=224, type=int,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
-parser.add_argument('--loss', default='l1_cut',  choices=['mse', 'wmse','huber','l1_cut'], type=str,
+parser.add_argument('--loss', default='wmse',  choices=['mse', 'wmse','huber','l1_cut'], type=str,
                     help='type of loss')
 
 args = parser.parse_args()
