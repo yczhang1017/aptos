@@ -169,7 +169,7 @@ def main():
     dataset={'train':None,'val':None}
     dataloader={'train':None,'val':None}
     data['train'], data['val'] = \
-        train_test_split(df.values.tolist(), test_size=0.1, random_state=42)  
+        train_test_split(df.values.tolist(), test_size=0.05, random_state=42)  
     '''
     multi= torch.pow(torch.tensor(dist[0]/dist,dtype=torch.float),1/3)
     data['train']=[]
@@ -195,7 +195,7 @@ def main():
     elif args.loss == 'wmse':
         #weight = torch.pow(torch.tensor(dist[0]/dist,dtype=torch.float),0.4)
         #weight[-1]=weight.max()
-        weight = torch.tensor([1,1.4,1.2,3,5])
+        weight = torch.tensor([1,1.4,1.2,3,8])
         print(weight)
         criterion = weighted_mse(weight)
         
@@ -205,7 +205,8 @@ def main():
     elif args.loss== 'l1_cut':
         #weight = torch.pow(torch.tensor(dist[0]/dist,dtype=torch.float),1/4)
         #weight[-1]=weight.max()
-        weight = torch.tensor([1,1.4,1.2,3,5])
+        weight = torch.tensor([1,1.4,1.2,3,7])
+        print(weight)
         criterion = L1_cut_loss(weight)
     
     if args.model in pretrainedmodels.__dict__.keys():
@@ -308,7 +309,7 @@ def main():
             print(ht)
             print(hp)
             print(hm)
-            print('n:{:d}, l:{:.4f}, a:{:.4f}, k:{:.4f}|{:.4f}, t:{:.4f}' \
+            print('n:{:d}, l:{:.4f}, a:{:.4f}, k:{:.4f}, k2:{:.4f}, t:{:.4f}' \
                   .format(num, running_loss/num, running_correct/num*100, kappa, kappa2, t2-t1))
             
             print('='*15)
