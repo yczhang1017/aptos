@@ -52,7 +52,7 @@ parser.add_argument('--size', default=224, type=int,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
-parser.add_argument('--loss', default='wmse',  choices=['mse', 'wmse','huber','l1_cut'], type=str,
+parser.add_argument('--loss', default='mse',  choices=['mse', 'wmse','huber','l1_cut'], type=str,
                     help='type of loss')
 
 args = parser.parse_args()
@@ -65,7 +65,6 @@ std=[0.2392, 0.1326, 0.0470]
 transform= { 
  'train':transforms.Compose([
      transforms.RandomResizedCrop(args.size,scale=(0.2, 1.0), ratio=(0.9, 1.11111)),
-     transforms.ColorJitter(0.3,0.1,0.1,0.04),
      transforms.RandomHorizontalFlip(),
      transforms.RandomVerticalFlip(),
      transforms.ToTensor(),
@@ -309,8 +308,9 @@ def main():
             print(ht)
             print(hp)
             print(hm)
-            print('n:{:d}, l:{:.4f}, a:{:.4f}, k:{:.4f}, k2:{:.4f}, t:{:.4f}' \
-                  .format(num, running_loss/num, running_correct/num*100, kappa, kappa2, t2-t1))
+            print('{:s}:{:d}, n:{:d}, l:{:.4f}, a:{:.4f}, k:{:.4f}, k2:{:.4f}, t:{:.4f}' \
+                  .format(phase, epoch+1, num, running_loss/num, \
+                          running_correct/num*100, kappa, kappa2, t2-t1))
             
             print('='*15)
             
