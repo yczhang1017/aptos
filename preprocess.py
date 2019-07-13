@@ -65,7 +65,6 @@ cnt = 0
 for folder in dirs:
     for f in os.listdir(folder):
         if f.endswith('png') or f.endswith('jpeg'):
-            print(f)
             im=Image.open(os.path.join(folder,f))
             w,h = im.size
             a= np.sqrt(w*h)
