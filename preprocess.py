@@ -54,15 +54,15 @@ def crop_image(im, size=512):
         return im.crop((x-r,y-r,x+r,y+r)).resize((size,size), resample=Image.BILINEAR), (x,y,r)
    
 
-
-output='train512'
-if not os.path.exists(output):
-    os.mkdir(output)
-
 dirs=['exter-resized/resized_train_cropped/', 'train_image']
+outputs=['blind512','train512']
+
 f=open('nocicle.txt','w')
 cnt = 0
-for folder in dirs:
+for folder, output in zip(dirs,outputs):
+    if not os.path.exists(output):
+        os.mkdir(output)
+    
     for f in os.listdir(folder):
         if f.endswith('png') or f.endswith('jpeg'):
             im=Image.open(os.path.join(folder,f))
