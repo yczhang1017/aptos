@@ -18,6 +18,7 @@ import torch.nn.functional as f
 from nasnetv2 import nasnetv2
 from sklearn.metrics import cohen_kappa_score, confusion_matrix
 from kappas import quadratic_weighted_kappa
+from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
 #import torch.nn.functional as F
 
 #from torch.autograd import Variable
@@ -100,7 +101,7 @@ def histogram(ratings, min_rating=None, max_rating=None):
 
 
 
-class APTOSDataset(torch.utils.data.Dataset):
+class APTOSDataset(Dataset):
     def __init__(self, root, phase, data ,transform):
         self.root= root
         self.phase=phase
@@ -163,29 +164,32 @@ class L1_cut_loss(nn.Module):
 def main():
     train_csv=os.path.join(args.root, 'train.csv')
     df  = pd.read_csv(train_csv)
-    dist= df.groupby('diagnosis').count().values.reshape(5)
+    #dist= df.groupby('diagnosis').count().values.reshape(5)
     
     data={'train':None,'val':None}
     dataset={'train':None,'val':None}
     dataloader={'train':None,'val':None}
     data['train'], data['val'] = \
         train_test_split(df.values.tolist(), test_size=0.05, random_state=42)  
-    '''
-    multi= torch.pow(torch.tensor(dist[0]/dist,dtype=torch.float),1/3)
-    data['train']=[]
-    for i in range(len(datalist)):
-        r=df.iloc[i]
-        diag=r['diagnosis']
-        for j in range(int(multi[diag])):
-            data['train'].append(r.values.tolist())
-    '''
+    sample_weight = [1]*len(data['train'])
+    
+    
+    ext_csv = os.path.join(args.root, 'exter-resized', 'trainLabels_cropped.csv')
+    df  = pd.read_csv(ext_csv)
+    
+    data['train'] += df.values.tolist()
+    sample_weight += [0.1]*len(df)
+    sampler = {'train': 
+        WeightedRandomSampler(sample_weight, 1,replacement=False),
+        'val':None
+        }
     
     print(len(data['train']),len(data['val']))
     image_folder = os.path.join(args.root,'train_image')
     dataset={x: APTOSDataset(image_folder, x, data[x], transform[x]) 
             for x in ['train', 'val']}
-    dataloader={x: torch.utils.data.DataLoader(dataset[x],
-            batch_size=args.batch,shuffle=(x=='train'),
+    dataloader={x: DataLoader(dataset[x],
+            batch_size=args.batch, sampler=sampler[x],
             num_workers=args.workers,pin_memory=True)
             for x in ['train', 'val']}
     
