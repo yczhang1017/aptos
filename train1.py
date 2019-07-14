@@ -176,12 +176,13 @@ def main():
     data['train'], data['val'] = \
         train_test_split(df.values.tolist(), test_size=0.05, random_state=42)  
     sample_weight = [1]*len(data['train'])
-    
-    
+
     ext_csv = os.path.join(args.root, 'exter-resized', 'trainLabels_cropped.csv')
-    df  = pd.read_csv(ext_csv)
+    df2  = pd.read_csv(ext_csv, names = ['0','1','id_code', 'diagnosis']).iloc[:,2:4]
+    data['train'] += df2.values.tolist()
+    df=df.append(df2)
+    print(df.groupby('diagnosis').count())
     
-    data['train'] += df.values.tolist()
     sample_weight += [0.1]*len(df)
     sampler = {'train': 
         WeightedRandomSampler(sample_weight, args.batch, replacement=False),
