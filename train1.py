@@ -123,7 +123,7 @@ class APTOSDataset(Dataset):
             root='train512'
         
         img_name = os.path.join(root,
-                                x + '.png')
+                                x + '.jpg')
         image = PIL.Image.open(img_name)
         '''
         w,h = image.size
