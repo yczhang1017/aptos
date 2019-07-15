@@ -51,7 +51,7 @@ parser.add_argument('--checkpoint', default=None, type=str,
                     help='Checkpoint state_dict file to resume training from') 
 parser.add_argument('--size', default=224, type=int,
                     help='image size')
-parser.add_argument('--print', default=10, type=int,
+parser.add_argument('--print', default=100, type=int,
                     help='print freq')
 parser.add_argument('--loss', default='mse',  choices=['mse', 'wmse','huber','l1_cut'], type=str,
                     help='type of loss')
