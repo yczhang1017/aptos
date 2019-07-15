@@ -187,8 +187,7 @@ def main():
     print(df.groupby('diagnosis').count())
     
     print(len(data['train']),len(data['val']))
-    image_folder = os.path.join(args.root)
-    dataset={x: APTOSDataset(image_folder, x, data[x], transform[x]) 
+    dataset={x: APTOSDataset(x, data[x], transform[x]) 
             for x in ['train', 'val']}
     dataloader={x: DataLoader(dataset[x],
             batch_size=args.batch, shuffle = (x=='train'),
