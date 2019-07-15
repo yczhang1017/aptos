@@ -65,8 +65,9 @@ mean=[0.4402, 0.2334, 0.0674]
 std=[0.2392, 0.1326, 0.0470]
 transform= { 
  'train':transforms.Compose([
-     transforms.RandomRotation(25),
-     transforms.RandomResizedCrop(args.size,scale=(0.2, 1.0), ratio=(0.9, 1.1111)),
+     transforms.RandomRotation(10, resample=PIL.Image.BILINEAR),
+     transforms.RandomResizedCrop(args.size,scale=(0.2, 1.0), 
+                                  ratio=(0.9, 1.1111),interpolation=PIL.Image.BILINEAR),
      transforms.ColorJitter(0.2,0.1,0.1,0.04),
      transforms.RandomHorizontalFlip(),
      transforms.RandomVerticalFlip(),
@@ -74,7 +75,8 @@ transform= {
      transforms.Normalize(mean,std)
      ]),      
  'val':transforms.Compose([
-     transforms.Resize((args.size,args.size)),
+     transforms.Resize((args.size,args.size),
+                       interpolation=PIL.Image.BILINEAR),
      transforms.ToTensor(),
      transforms.Normalize(mean,std)
      ])}
