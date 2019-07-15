@@ -51,7 +51,7 @@ parser.add_argument('--checkpoint', default=None, type=str,
                     help='Checkpoint state_dict file to resume training from') 
 parser.add_argument('--size', default=224, type=int,
                     help='image size')
-parser.add_argument('--print', default=100, type=int,
+parser.add_argument('--print', default=10, type=int,
                     help='print freq')
 parser.add_argument('--loss', default='mse',  choices=['mse', 'wmse','huber','l1_cut'], type=str,
                     help='type of loss')
@@ -203,7 +203,7 @@ def main():
     elif args.loss == 'wmse':
         #weight = torch.pow(torch.tensor(dist[0]/dist,dtype=torch.float),0.4)
         #weight[-1]=weight.max()
-        weight = torch.tensor([1, 2.1, 1.7, 3, 6])
+        weight = torch.tensor([1, 1.7, 1.4, 2.6, 5])
         print(weight)
         criterion = weighted_mse(weight)
         
