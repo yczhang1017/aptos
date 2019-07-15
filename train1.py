@@ -18,7 +18,7 @@ import torch.nn.functional as f
 from nasnetv2 import nasnetv2
 from sklearn.metrics import cohen_kappa_score, confusion_matrix
 from kappas import quadratic_weighted_kappa
-from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
+from torch.utils.data import Dataset, DataLoader
 #import torch.nn.functional as F
 
 #from torch.autograd import Variable
@@ -103,8 +103,7 @@ def histogram(ratings, min_rating=None, max_rating=None):
 
 
 class APTOSDataset(Dataset):
-    def __init__(self, root, phase, data ,transform):
-        self.root= root
+    def __init__(self, phase, data ,transform):
         self.phase=phase
         self.data=data
         self.transform = transform
@@ -175,26 +174,19 @@ def main():
     dataloader={'train':None,'val':None}
     data['train'], data['val'] = \
         train_test_split(df.values.tolist(), test_size=0.05, random_state=42)  
-    sample_weight = [1]*len(data['train'])
-
+        
     ext_csv = os.path.join(args.root, 'exter-resized', 'trainLabels_cropped.csv')
     df2  = pd.read_csv(ext_csv, names = ['0','1','id_code', 'diagnosis']).iloc[:,2:4]
     data['train'] += df2.values.tolist()
     df=df.append(df2)
     print(df.groupby('diagnosis').count())
     
-    sample_weight += [0.1]*len(df)
-    sampler = {'train': 
-        WeightedRandomSampler(sample_weight, args.batch, replacement=False),
-        'val':None
-        }
-    
     print(len(data['train']),len(data['val']))
-    image_folder = os.path.join(args.root,'train_image')
+    image_folder = os.path.join(args.root)
     dataset={x: APTOSDataset(image_folder, x, data[x], transform[x]) 
             for x in ['train', 'val']}
     dataloader={x: DataLoader(dataset[x],
-            batch_size=args.batch, sampler=sampler[x],
+            batch_size=args.batch, shuffle = (x=='train'),
             num_workers=args.workers,pin_memory=True)
             for x in ['train', 'val']}
     
