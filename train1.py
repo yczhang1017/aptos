@@ -53,7 +53,7 @@ parser.add_argument('--size', default=224, type=int,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
-parser.add_argument('--loss', default='mse',  choices=['mse', 'wmse','huber','l1_cut'], type=str,
+parser.add_argument('--loss', default='wmse',  choices=['mse', 'wmse','huber','l1_cut'], type=str,
                     help='type of loss')
 
 args = parser.parse_args()
@@ -203,7 +203,7 @@ def main():
     elif args.loss == 'wmse':
         #weight = torch.pow(torch.tensor(dist[0]/dist,dtype=torch.float),0.4)
         #weight[-1]=weight.max()
-        weight = torch.tensor([1,1.4,1.2,3,8])
+        weight = torch.tensor([1,1.4,1.2,3,6])
         print(weight)
         criterion = weighted_mse(weight)
         
@@ -213,7 +213,7 @@ def main():
     elif args.loss== 'l1_cut':
         #weight = torch.pow(torch.tensor(dist[0]/dist,dtype=torch.float),1/4)
         #weight[-1]=weight.max()
-        weight = torch.tensor([1,1.4,1.2,3,7])
+        weight = torch.tensor([1,1.4,1.2,3,6])
         print(weight)
         criterion = L1_cut_loss(weight)
     
