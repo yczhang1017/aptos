@@ -117,7 +117,12 @@ class APTOSDataset(Dataset):
         elif self.phase == 'test' :
             x = self.data[idx]
         
-        img_name = os.path.join(self.root,
+        if '_' in x:
+            root='blind512'
+        else:
+            root='train512'
+        
+        img_name = os.path.join(root,
                                 x + '.png')
         image = PIL.Image.open(img_name)
         '''
