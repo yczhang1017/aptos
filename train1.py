@@ -61,8 +61,8 @@ args = parser.parse_args()
 if not os.path.exists(args.save_folder):
     os.mkdir(args.save_folder)
 
-mean=[0.4402, 0.2334, 0.0674]
-std=[0.2392, 0.1326, 0.0470]
+mean=[0.4531, 0.2428, 0.0793]
+std=[0.2215, 0.1235, 0.0482]
 transform= { 
  'train':transforms.Compose([
      transforms.RandomResizedCrop(args.size,scale=(0.25, 1.0), 
