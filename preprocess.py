@@ -53,7 +53,7 @@ for folder, output in zip(dirs,outputs):
             name,_ = f.split('.')
             im=Image.open(os.path.join(folder,f))
             w,h = im.size
-            flag = circle(im, 512)
+            flag = circle(im)
             if flag:
                 x,y,r=flag
                 x1= max(x-r,0)
@@ -69,9 +69,11 @@ for folder, output in zip(dirs,outputs):
             tensor = totensor(im)
             mean += tensor.mean(dim=(0,1)) 
             std += tensor.std(dim=(0,1))
+            flog.write(mean,std)
 
+
+flog.write(cnt)
+flog.write(mean/cnt)
+flog.write(std/cnt)
 
 flog.close()
-print(cnt)
-print(mean/cnt)
-print(std/cnt)
