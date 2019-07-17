@@ -12,7 +12,7 @@ import cv2
 import torch
 
 transform=transforms.Compose([
-        transforms.Resize(1024)
+        transforms.Resize(640)
      ]) 
 totensor=transforms.Compose([     
     transforms.ToTensor()])
