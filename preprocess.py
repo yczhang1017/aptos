@@ -64,7 +64,7 @@ for folder, output in zip(dirs,outputs):
                     im=im.crop((x1,y1,x2,y2))
             cnt+=1
             im=transform(im)
-            im.save(os.path.join(output,name+'.jpg'))
+            im.save(os.path.join(output,name+'.jpeg'))
             tensor = totensor(im)
             mean += tensor.mean(dim=(1,2)) 
             std += tensor.std(dim=(1,2))
