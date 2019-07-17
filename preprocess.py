@@ -8,36 +8,20 @@ import os
 import numpy as np
 from PIL import Image
 from torchvision.transforms import transforms
-import numpy
 import cv2
-import matplotlib.pyplot as plt
+import torch
 
-mean=[0.4402, 0.2334, 0.0674]
-std=[0.2392, 0.1326, 0.0470]
-size=224
-transform= { 
- 'train':transforms.Compose([
-     #transforms.RandomResizedCrop(size,scale=(0.2, 1.0), ratio=(0.9, 1.11111)),
-     #transforms.ColorJitter(0.3,0.1,0.1,0.04),
-     transforms.RandomHorizontalFlip(),
-     transforms.RandomVerticalFlip()
-     ]),      
- 'val':transforms.Compose([
-     transforms.Resize((size,size))
-     ]),
-'test':transforms.Compose([
-     transforms.Resize((size,size))
-     ])}
-
+transform=transforms.Compose([
+        transforms.Resize(1024)
+     ]) 
 totensor=transforms.Compose([     
-    transforms.ToTensor(),
-    transforms.Normalize(mean,std)])
+    transforms.ToTensor()])
 
 
-def crop_image(im, size=512):
+def circle(im):
     #output = image.copy()
     pil_image = im.convert('RGB') 
-    open_cv_image = numpy.array(pil_image)
+    open_cv_image = np.array(pil_image)
     open_cv_image = open_cv_image[:, :, ::-1].copy() 
     gray = cv2.cvtColor(open_cv_image, cv2.COLOR_BGR2GRAY)
     ret,gray = cv2.threshold(gray,10,255,cv2.THRESH_BINARY)
@@ -51,37 +35,43 @@ def crop_image(im, size=512):
     x = int(x); y = int(y); r = int(r)
     flag = 1
     if r > 100:
-        return im.crop((x-r,y-r,x+r,y+r)).resize((size,size), resample=Image.BILINEAR), (x,y,r)
-   
+        return (x,y,r)    
 
 dirs=['exter-resized/resized_train_cropped/', 'train_image']
 outputs=['blind512','train512']
 
-f=open('nocicle.txt','w')
+flog=open('nocicle.txt','w')
 cnt = 0
+mean= torch.zeros((3))
+std= torch.zeros((3))
+
 for folder, output in zip(dirs,outputs):
     if not os.path.exists(output):
         os.mkdir(output)
-    
     for f in os.listdir(folder):
         if f.endswith('png') or f.endswith('jpeg'):
+            name,_ = f.split('.')
             im=Image.open(os.path.join(folder,f))
             w,h = im.size
-            a= np.sqrt(w*h)
-            tf = transforms.Compose([
-                    transforms.RandomRotation(12),
-                    transforms.CenterCrop((a,a))])
-            
-            im, flag=crop_image(im, 512)
+            flag = circle(im, 512)
             if flag:
-                im=transform['train'](im)
-                name,_ = f.split('.')
-                im.save(os.path.join(output,name+'.jpg'))
-                print(name,':',flag)
-                cnt+=1
-            else:
-                print(name,':no circle found')
-                f.write(name+'\n')
+                x,y,r=flag
+                x1= max(x-r,0)
+                y1= max(y-r,0)
+                x2= min(x+r,w)
+                y2= min(y+r,h)
+                if x1>0 or y1>0 or x2<w or y2<h:
+                    flog.write(f,':',flag,(w,h),(x1,x2,y1,y2))
+                    im=im.crop((x1,y1,x2,y2))
+            cnt+=1
+            im=transform(im)
+            im.save(os.path.join(output,name+'.jpg'))
+            tensor = totensor(im)
+            mean += tensor.mean(dim=(0,1)) 
+            std += tensor.std(dim=(0,1))
 
-f.close()
+
+flog.close()
 print(cnt)
+print(mean/cnt)
+print(std/cnt)
