@@ -35,7 +35,7 @@ parser.add_argument('--batch', default=16, type=int,
                     help='Batch size for training')
 parser.add_argument('--workers', default=4, type=int,
                     help='Number of workers used in dataloading')
-parser.add_argument('--lr', '--learning-rate', default=2e-3, type=float,
+parser.add_argument('--lr', '--learning-rate', default=1e-3, type=float,
                     help='initial learning rate')
 parser.add_argument('-e','--epochs', default=48, type=int,
                     help='number of epochs to train')
@@ -49,7 +49,7 @@ parser.add_argument('--model', default='pnasnet5large', type=str,
                     help='model name')
 parser.add_argument('--checkpoint', default=None, type=str,
                     help='Checkpoint state_dict file to resume training from') 
-parser.add_argument('--size', default=224, type=int,
+parser.add_argument('--size', default=331, type=int,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
@@ -65,18 +65,16 @@ mean=[0.4402, 0.2334, 0.0674]
 std=[0.2392, 0.1326, 0.0470]
 transform= { 
  'train':transforms.Compose([
-     transforms.RandomRotation(10, resample=PIL.Image.BILINEAR),
-     transforms.RandomResizedCrop(args.size,scale=(0.2, 1.0), 
-                                  ratio=(0.9, 1.1111),interpolation=PIL.Image.BILINEAR),
-     transforms.ColorJitter(0.2,0.1,0.1,0.04),
+     transforms.RandomResizedCrop(args.size,scale=(0.25, 1.0), 
+                                  ratio=(0.75, 1.3333333333333333), interpolation=2),
+     transforms.ColorJitter(0.4,0.3,0.3,0.04),
      transforms.RandomHorizontalFlip(),
-     transforms.RandomVerticalFlip(),
      transforms.ToTensor(),
      transforms.Normalize(mean,std)
      ]),      
  'val':transforms.Compose([
      transforms.Resize((args.size,args.size),
-                       interpolation=PIL.Image.BILINEAR),
+                        interpolation=2),
      transforms.ToTensor(),
      transforms.Normalize(mean,std)
      ])}
@@ -120,21 +118,13 @@ class APTOSDataset(Dataset):
             x = self.data[idx]
         
         if '_' in x:
-            root='blind512'
+            root='exter-resized/resized_train_cropped/'
         else:
             root='train512'
         
         img_name = os.path.join(root,
                                 x + '.jpg')
         image = PIL.Image.open(img_name)
-        '''
-        w,h = image.size
-        a= np.sqrt(w*h)
-        tf = transforms.Compose([
-                transforms.RandomRotation(12),
-                transforms.CenterCrop((a,a))])
-        image =tf(image)    
-        '''    
         image = self.transform(image)
         if self.phase in ['train','val']:
             return image, y
@@ -203,7 +193,7 @@ def main():
     elif args.loss == 'wmse':
         #weight = torch.pow(torch.tensor(dist[0]/dist,dtype=torch.float),0.4)
         #weight[-1]=weight.max()
-        weight = torch.tensor([1, 1.7, 1.4, 2.6, 5])
+        weight = torch.tensor([1, 2, 1.7, 3, 8])
         print(weight)
         criterion = weighted_mse(weight)
         
