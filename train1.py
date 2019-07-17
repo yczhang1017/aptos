@@ -123,7 +123,7 @@ class APTOSDataset(Dataset):
             root='train512'
         
         img_name = os.path.join(root,
-                                x + '.jpg')
+                                x + '.jpeg')
         image = PIL.Image.open(img_name)
         image = self.transform(image)
         if self.phase in ['train','val']:
