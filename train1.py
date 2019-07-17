@@ -120,7 +120,7 @@ class APTOSDataset(Dataset):
         if '_' in x:
             root='exter-resized/resized_train_cropped/'
         else:
-            root='train512'
+            root='train1024'
         
         img_name = os.path.join(root,
                                 x + '.jpeg')
