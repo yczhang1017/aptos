@@ -12,7 +12,7 @@ import cv2
 import torch
 
 transform=transforms.Compose([
-        transforms.Resize(640)
+        transforms.Resize(1024)
      ]) 
 totensor=transforms.Compose([     
     transforms.ToTensor()])
@@ -37,8 +37,8 @@ def circle(im):
     if r > 100:
         return (x,y,r)    
 
-dirs=['exter-resized/resized_train_cropped/', 'train_image']
-outputs=['blind512','train512']
+dirs=['train_image']
+outputs=['train1024']
 
 cnt = 0
 mean= torch.zeros((3))
