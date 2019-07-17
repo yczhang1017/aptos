@@ -40,7 +40,6 @@ def circle(im):
 dirs=['exter-resized/resized_train_cropped/', 'train_image']
 outputs=['blind512','train512']
 
-flog=open('nocicle.txt','w')
 cnt = 0
 mean= torch.zeros((3))
 std= torch.zeros((3))
@@ -61,7 +60,7 @@ for folder, output in zip(dirs,outputs):
                 x2= min(x+r,w)
                 y2= min(y+r,h)
                 if x1>0 or y1>0 or x2<w or y2<h:
-                    flog.write(f,':',flag,(w,h),(x1,x2,y1,y2))
+                    print(f,':',flag,(w,h),(x1,x2,y1,y2))
                     im=im.crop((x1,y1,x2,y2))
             cnt+=1
             im=transform(im)
@@ -69,11 +68,10 @@ for folder, output in zip(dirs,outputs):
             tensor = totensor(im)
             mean += tensor.mean(dim=(0,1)) 
             std += tensor.std(dim=(0,1))
-            flog.write(mean,std)
+            print(mean,std)
 
 
-flog.write(cnt)
-flog.write(mean/cnt)
-flog.write(std/cnt)
+print(cnt)
+print(mean/cnt)
+print(std/cnt)
 
-flog.close()
