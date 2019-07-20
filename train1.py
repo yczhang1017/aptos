@@ -53,7 +53,7 @@ parser.add_argument('--size', default=331, type=int,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
-parser.add_argument('--loss', default='mse',  choices=['mse', 'wmse','huber','l1_cut'], type=str,
+parser.add_argument('--loss', default='wmse',  choices=['wmse', 'wmse','huber','l1_cut'], type=str,
                     help='type of loss')
 
 args = parser.parse_args()
@@ -65,9 +65,9 @@ mean=[0.4531, 0.2428, 0.0793]
 std=[0.2215, 0.1235, 0.0482]
 transform= { 
  'train':transforms.Compose([
-     transforms.RandomResizedCrop(args.size,scale=(0.25, 1.0), 
+     transforms.RandomResizedCrop(args.size,scale=(0.2, 1.0), 
                                   ratio=(0.75, 1.3333333333333333), interpolation=2),
-     transforms.ColorJitter(0.4,0.3,0.3,0.04),
+     transforms.ColorJitter(0.3,0.2,0.2,0.04),
      transforms.RandomHorizontalFlip(),
      transforms.ToTensor(),
      transforms.Normalize(mean,std)
@@ -203,7 +203,7 @@ def main():
     elif args.loss== 'l1_cut':
         #weight = torch.pow(torch.tensor(dist[0]/dist,dtype=torch.float),1/4)
         #weight[-1]=weight.max()
-        weight = torch.tensor([1,1.4,1.2,3,7])
+        weight = torch.tensor([1,2,1.4,3.2,5.4]) #[1,1.7,1.4,2.6,5]
         print(weight)
         criterion = L1_cut_loss(weight)
     
