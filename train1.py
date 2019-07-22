@@ -216,11 +216,16 @@ def main():
         else:
             model = EfficientNet.from_name(args.model)
         model._fc = nn.Sequential( 
-                nn.Linear(in_features=1000, out_features=200, bias=True),
-                nn.ReLU(),
+                nn.BatchNorm1d(2560),
                 nn.Dropout(p=0.25),
-                nn.Linear(in_features=200, out_features=60, bias=True),
+                nn.Linear(in_features=2560, out_features=500, bias=True),
                 nn.ReLU(),
+                nn.BatchNorm1d(500),
+                nn.Dropout(p=0.25),
+                nn.Linear(in_features=500, out_features=60, bias=True),
+                nn.ReLU(),
+                nn.BatchNorm1d(60),
+                nn.Dropout(p=0.25),
                 nn.Linear(in_features=60, out_features=1, bias=True))
          
          
