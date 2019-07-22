@@ -47,7 +47,7 @@ parser.add_argument('--weight_decay', default=5e-4, type=float,
                     help='Weight decay')
 parser.add_argument('--resume', default=0, type=int,
                     help='epoch number to be resumed at')
-parser.add_argument('--model', default='efficientnet-b7', type=str,
+parser.add_argument('--model', default='efficientnet-b5', type=str,
                     help='model name')
 parser.add_argument('--checkpoint', default=None, type=str,
                     help='Checkpoint state_dict file to resume training from') 
@@ -217,9 +217,9 @@ def main():
         else:
             model = EfficientNet.from_name(args.model)
         model._fc = nn.Sequential( 
-                nn.BatchNorm1d(2560),
+                nn.BatchNorm1d(2048),
                 nn.Dropout(p=0.25),
-                nn.Linear(in_features=2560, out_features=500, bias=True),
+                nn.Linear(in_features=2048, out_features=500, bias=True),
                 nn.ReLU(),
                 nn.BatchNorm1d(500),
                 nn.Dropout(p=0.25),
