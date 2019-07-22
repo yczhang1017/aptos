@@ -211,7 +211,7 @@ def main():
     
     if args.model.startswith('efficientnet'):
         msize = int(args.model[-1])
-        if mszie<6:
+        if msize<6:
             model = EfficientNet.from_pretrained(args.model)
         else:
             model = EfficientNet.from_name(args.model)
