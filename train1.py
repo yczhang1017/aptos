@@ -19,6 +19,8 @@ from nasnetv2 import nasnetv2
 from sklearn.metrics import cohen_kappa_score, confusion_matrix
 from kappas import quadratic_weighted_kappa
 from torch.utils.data import Dataset, DataLoader
+
+from efficientnet_pytorch import EfficientNet
 #import torch.nn.functional as F
 
 #from torch.autograd import Variable
@@ -31,7 +33,7 @@ parser = argparse.ArgumentParser(
     description='train a model')
 parser.add_argument('--root', default='./',
                     type=str, help='directory of the data')
-parser.add_argument('--batch', default=16, type=int,
+parser.add_argument('--batch', default=32, type=int,
                     help='Batch size for training')
 parser.add_argument('--workers', default=4, type=int,
                     help='Number of workers used in dataloading')
@@ -45,11 +47,11 @@ parser.add_argument('--weight_decay', default=5e-4, type=float,
                     help='Weight decay')
 parser.add_argument('--resume', default=0, type=int,
                     help='epoch number to be resumed at')
-parser.add_argument('--model', default='pnasnet5large', type=str,
+parser.add_argument('--model', default='efficientnet-b7', type=str,
                     help='model name')
 parser.add_argument('--checkpoint', default=None, type=str,
                     help='Checkpoint state_dict file to resume training from') 
-parser.add_argument('--size', default=331, type=int,
+parser.add_argument('--size', default=256, type=int,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
@@ -207,7 +209,22 @@ def main():
         print(weight)
         criterion = L1_cut_loss(weight)
     
-    if args.model in pretrainedmodels.__dict__.keys():
+    if args.model.startswith('efficientnet'):
+        msize = int(args.model[-1])
+        if mszie<6:
+            model = EfficientNet.from_pretrained(args.model)
+        else:
+            model = EfficientNet.from_name(args.model)
+        model._fc = nn.Sequential( 
+                nn.Linear(in_features=1000, out_features=200, bias=True),
+                nn.ReLU(),
+                nn.Dropout(p=0.25),
+                nn.Linear(in_features=200, out_features=60, bias=True),
+                nn.ReLU(),
+                nn.Linear(in_features=60, out_features=1, bias=True))
+         
+         
+    elif args.model in pretrainedmodels.__dict__.keys():
         model = pretrainedmodels.__dict__[args.model](num_classes=1000, pretrained='imagenet')
         model.avg_pool = nn.AdaptiveAvgPool2d(1)
         model.last_linear = nn.Sequential( 
