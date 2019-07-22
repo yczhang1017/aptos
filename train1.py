@@ -71,6 +71,7 @@ transform= {
                                   ratio=(0.75, 1.3333333333333333), interpolation=2),
      transforms.ColorJitter(0.3,0.2,0.2,0.04),
      transforms.RandomHorizontalFlip(),
+     transforms.RandomVerticalFlip(),
      transforms.ToTensor(),
      transforms.Normalize(mean,std)
      ]),      
