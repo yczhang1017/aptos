@@ -191,10 +191,10 @@ def main():
             for x in ['train', 'val']}
     
     weight = torch.tensor([1, 2.49, 1.81, 3.68, 4])  #[1,1.7,1.4,2.6,5]
-    if args.loss == 'mse':
+    if args.loss == 'mse' or args.loss == 'wmse2':
         criterion = nn.MSELoss()
     
-    elif args.loss == 'wmse' or args.loss == 'wmse2':
+    elif args.loss == 'wmse':
         print(weight)
         criterion = weighted_mse(weight)
         
