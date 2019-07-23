@@ -63,8 +63,8 @@ args = parser.parse_args()
 if not os.path.exists(args.save_folder):
     os.mkdir(args.save_folder)
 
-mean=[0.5429, 0.5268, 0.5186]
-std=[0.1908, 0.1748, 0.1354]
+mean=[0.4211, 0.2872, 0.1968]
+std=[0.2305, 0.1581, 0.1095]
 transform= { 
  'train':transforms.Compose([
      transforms.RandomResizedCrop(args.size,scale=(0.4, 1.0), 
@@ -258,7 +258,7 @@ def main():
  
     optimizer = optim.SGD(model.parameters(),lr=args.lr, 
                           momentum=0.9, weight_decay=args.weight_decay)
-    scheduler = MultiStepLR(optimizer, milestones=[16,24,32,48], gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=[16,24,32,40], gamma=0.1)
    
     for i in range(args.resume):
         scheduler.step()
