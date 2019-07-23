@@ -72,8 +72,8 @@ def load_ben_color(path, sigmaX=20):
     return image
 
 
-dirs=['train_image']
-outputs=['train1024']
+dirs=['train_image', 'exter-resized/resized_train_cropped']
+outputs=['train512', 'prev512']
 
 cnt = 0
 mean= torch.zeros((3))
@@ -85,6 +85,7 @@ for folder, output in zip(dirs,outputs):
     for f in os.listdir(folder):
         if f.endswith('png') or f.endswith('jpeg'):
             name,_ = f.split('.')
+            '''
             im=Image.open(os.path.join(folder,f))
             w,h = im.size
             flag = circle(im)
@@ -97,8 +98,12 @@ for folder, output in zip(dirs,outputs):
                 if x1>0 or y1>0 or x2<w or y2<h:
                     print(f,':',flag,(w,h),(x1,x2,y1,y2))
                     im=im.crop((x1,y1,x2,y2))
-            cnt+=1
             im=transform(im)
+            im.save(os.path.join(output,name+'.jpeg'))
+            '''
+            im = load_ben_color(os.path.join(folder,f))
+            cnt+=1
+            im = Image.fromarray(im)
             im.save(os.path.join(output,name+'.jpeg'))
             tensor = totensor(im)
             mean += tensor.mean(dim=(1,2)) 
