@@ -85,7 +85,6 @@ for folder, output in zip(dirs,outputs):
     for f in os.listdir(folder):
         if f.endswith('png') or f.endswith('jpeg'):
             name,_ = f.split('.')
-            '''
             im=Image.open(os.path.join(folder,f))
             w,h = im.size
             flag = circle(im)
@@ -102,10 +101,11 @@ for folder, output in zip(dirs,outputs):
             im.save(os.path.join(output,name+'.jpeg'))
             '''
             im = load_ben_color(os.path.join(folder,f))
-            cnt+=1
             im = Image.fromarray(im)
             im.save(os.path.join(output,name+'.jpeg'))
+            '''
             tensor = totensor(im)
+            cnt+=1
             mean += tensor.mean(dim=(1,2)) 
             std += tensor.std(dim=(1,2))
 
