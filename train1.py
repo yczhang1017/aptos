@@ -67,9 +67,9 @@ mean=[0.4211, 0.2872, 0.1968]
 std=[0.2305, 0.1581, 0.1095]
 transform= { 
  'train':transforms.Compose([
-     transforms.RandomResizedCrop(args.size,scale=(0.4, 1.0), 
+     transforms.RandomResizedCrop(args.size,scale=(0.2, 1.0), 
                                   ratio=(0.8, 1.25), interpolation=2),
-     transforms.ColorJitter(0.2,0.1,0.1,0.02),
+     transforms.ColorJitter(0.2,0.1,0.1,0.04),
      transforms.RandomHorizontalFlip(),
      transforms.RandomVerticalFlip(),
      transforms.ToTensor(),
