@@ -37,9 +37,9 @@ parser.add_argument('--batch', default=32, type=int,
                     help='Batch size for training')
 parser.add_argument('--workers', default=4, type=int,
                     help='Number of workers used in dataloading')
-parser.add_argument('--lr', '--learning-rate', default=1e-2, type=float,
+parser.add_argument('--lr', '--learning-rate', default=1e-3, type=float,
                     help='initial learning rate')
-parser.add_argument('-e','--epochs', default=40, type=int,
+parser.add_argument('-e','--epochs', default=48, type=int,
                     help='number of epochs to train')
 parser.add_argument('-s','--save_folder', default='save/', type=str,
                     help='Dir to save results')
@@ -55,7 +55,7 @@ parser.add_argument('--size', default=256, type=int,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
-parser.add_argument('--loss', default='wmse',  choices=['mse', 'wmse','huber','l1_cut'], type=str,
+parser.add_argument('--loss', default='wmse2',  choices=['mse', 'wmse','huber','l1_cut', 'wmse2'], type=str,
                     help='type of loss')
 
 args = parser.parse_args()
@@ -63,8 +63,8 @@ args = parser.parse_args()
 if not os.path.exists(args.save_folder):
     os.mkdir(args.save_folder)
 
-mean=[0.4531, 0.2428, 0.0793]
-std=[0.2215, 0.1235, 0.0482]
+mean=[0.5429, 0.5268, 0.5186]
+std=[0.1908, 0.1748, 0.1354]
 transform= { 
  'train':transforms.Compose([
      transforms.RandomResizedCrop(args.size,scale=(0.4, 1.0), 
@@ -190,13 +190,11 @@ def main():
             num_workers=args.workers,pin_memory=True)
             for x in ['train', 'val']}
     
+    weight = torch.tensor([1, 2.49, 1.81, 3.68, 4])  #[1,1.7,1.4,2.6,5]
     if args.loss == 'mse':
         criterion = nn.MSELoss()
     
-    elif args.loss == 'wmse':
-        #weight = torch.pow(torch.tensor(dist[0]/dist,dtype=torch.float),0.4)
-        #weight[-1]=weight.max()
-        weight = torch.tensor([1, 2.14, 1.6, 3.2, 3.6])  #[1,1.7,1.4,2.6,5]
+    elif args.loss == 'wmse' or args.loss == 'wmse2':
         print(weight)
         criterion = weighted_mse(weight)
         
@@ -204,9 +202,6 @@ def main():
         criterion = nn.SmoothL1Loss()
         
     elif args.loss== 'l1_cut':
-        #weight = torch.pow(torch.tensor(dist[0]/dist,dtype=torch.float),1/4)
-        #weight[-1]=weight.max()
-        weight = torch.tensor([1,2,1.4,3.2,5.4]) #[1,1.7,1.4,2.6,5]
         print(weight)
         criterion = L1_cut_loss(weight)
     
@@ -218,15 +213,15 @@ def main():
             model = EfficientNet.from_name(args.model)
         model._fc = nn.Sequential( 
                 nn.BatchNorm1d(2048),
-                nn.Dropout(p=0.25),
+                nn.Dropout(p=0.4),
                 nn.Linear(in_features=2048, out_features=500, bias=True),
                 nn.ReLU(),
                 nn.BatchNorm1d(500),
-                nn.Dropout(p=0.25),
+                nn.Dropout(p=0.4),
                 nn.Linear(in_features=500, out_features=60, bias=True),
                 nn.ReLU(),
                 nn.BatchNorm1d(60),
-                nn.Dropout(p=0.25),
+                nn.Dropout(p=0.4),
                 nn.Linear(in_features=60, out_features=1, bias=True))
          
          
@@ -235,15 +230,15 @@ def main():
         model.avg_pool = nn.AdaptiveAvgPool2d(1)
         model.last_linear = nn.Sequential( 
                 nn.BatchNorm1d(4320),
-                nn.Dropout(p=0.25),
+                nn.Dropout(p=0.4),
                 nn.Linear(in_features=4320, out_features=600, bias=True),
                 nn.ReLU(),
                 nn.BatchNorm1d(600),
-                nn.Dropout(p=0.25),
+                nn.Dropout(p=0.4),
                 nn.Linear(in_features=600, out_features=100, bias=True),
                 nn.ReLU(),
                 nn.BatchNorm1d(100),
-                nn.Dropout(p=0.25),
+                nn.Dropout(p=0.4),
                 nn.Linear(in_features=100, out_features=1, bias=True),
                 )
     elif args.model == 'nasnetv2':
@@ -263,13 +258,17 @@ def main():
  
     optimizer = optim.SGD(model.parameters(),lr=args.lr, 
                           momentum=0.9, weight_decay=args.weight_decay)
-    scheduler = MultiStepLR(optimizer, milestones=[8,16,24,32], gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=[16,24,32,48], gamma=0.1)
    
     for i in range(args.resume):
         scheduler.step()
     for epoch in range(args.resume,args.epochs):
         print('Epoch {}/{}'.format(epoch+1, args.epochs))
         print('-' * 10)
+        if epoch == 3 and args.loss== 'wmse2':
+            print('applying weihts to loss:', weight)
+            criterion = L1_cut_loss(weight)
+                
         for phase in ['train','val']:
             if phase == 'train':
                 scheduler.step()
@@ -336,10 +335,10 @@ def main():
             
             print('='*15)
             
-            
             if phase == 'val':
                 torch.save(model.state_dict(),
                           os.path.join(args.save_folder,'out_'+str(epoch+1)+'.pth'))
+            
         print()
         
 if __name__ == '__main__':
