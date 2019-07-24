@@ -266,8 +266,8 @@ def main():
         print('Epoch {}/{}'.format(epoch+1, args.epochs))
         print('-' * 10)
         if epoch == 3 and args.loss== 'wmse2':
-            print('applying weihts to loss:', weight)
-            criterion = L1_cut_loss(weight)
+            print('applying weights to loss:', weight)
+            criterion = weighted_mse(weight)
                 
         for phase in ['train','val']:
             if phase == 'train':
