@@ -21,11 +21,14 @@ from kappas import quadratic_weighted_kappa
 from torch.utils.data import Dataset, DataLoader
 
 from efficientnet_pytorch import EfficientNet
-#import torch.nn.functional as F
 
-#from torch.autograd import Variable
+from torch.utils import model_zoo
+from efficientnet_pytorch.utils import (
+    get_model_params,
+    BlockArgs,
+    url_map
+)
 
-#import torch.utils.model_zoo as model_zoo
 
 
 
@@ -47,11 +50,11 @@ parser.add_argument('--weight_decay', default=5e-4, type=float,
                     help='Weight decay')
 parser.add_argument('--resume', default=0, type=int,
                     help='epoch number to be resumed at')
-parser.add_argument('--model', default='efficientnet-b5', type=str,
+parser.add_argument('--model', default='effnet', type=str,
                     help='model name')
 parser.add_argument('--checkpoint', default=None, type=str,
                     help='Checkpoint state_dict file to resume training from') 
-parser.add_argument('--size', default=224, type=int,
+parser.add_argument('--size', default=456, type=int,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
@@ -165,31 +168,6 @@ class L1_cut_loss(nn.Module):
 
     
 def main():
-    train_csv=os.path.join(args.root, 'train.csv')
-    df  = pd.read_csv(train_csv)
-    #dist= df.groupby('diagnosis').count().values.reshape(5)
-    
-    data={'train':None,'val':None}
-    dataset={'train':None,'val':None}
-    dataloader={'train':None,'val':None}
-    data['train'], data['val'] = \
-        train_test_split(df.values.tolist(), test_size=0.05, random_state=42)  
-        
-    ext_csv = os.path.join(args.root, 'exter-resized', 'trainLabels_cropped.csv')
-    df2  = pd.read_csv(ext_csv, header=1 ,names = ['0','1','id_code', 'diagnosis']).iloc[:,2:4]
-    df2['diagnosis'] = df2['diagnosis'].astype(int)
-    data['train'] += df2.values.tolist()
-    df=df.append(df2)
-    print(df.groupby('diagnosis').count())
-    
-    print(len(data['train']),len(data['val']))
-    dataset={x: APTOSDataset(x, data[x], transform[x]) 
-            for x in ['train', 'val']}
-    dataloader={x: DataLoader(dataset[x],
-            batch_size=args.batch, shuffle = (x=='train'),
-            num_workers=args.workers,pin_memory=True)
-            for x in ['train', 'val']}
-    
     weight = torch.tensor([1, 3.2, 1.6, 3, 6])  #[1,1.7,1.4,2.6,5]
     if args.loss == 'mse' or args.loss == 'wmse2':
         criterion = nn.MSELoss()
@@ -205,6 +183,32 @@ def main():
         print(weight)
         criterion = L1_cut_loss(weight)
     
+    
+    if args.model == 'effnet':
+        blocks_args, global_params = get_model_params('efficientnet-b5', None)
+        blocks_args.append(
+                BlockArgs(kernel_size=5, num_repeat=3, input_filters=320, output_filters=480, 
+                          expand_ratio=6, id_skip=True, stride=[2], se_ratio=0.25))
+        model = EfficientNet(blocks_args,global_params)
+        pretrained_dict = model_zoo.load_url(url_map['efficientnet-b5'])
+        model_dict = model.state_dict()
+        del pretrained_dict['_conv_head.weight']
+        pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
+        model_dict.update(pretrained_dict) 
+        model.load_state_dict(model_dict)
+        model._fc = nn.Sequential( 
+                nn.BatchNorm1d(2048),
+                nn.Dropout(p=0.5),
+                nn.Linear(in_features=2048, out_features=500, bias=True),
+                nn.ReLU(),
+                nn.BatchNorm1d(500),
+                nn.Dropout(p=0.5),
+                nn.Linear(in_features=500, out_features=60, bias=True),
+                nn.ReLU(),
+                nn.BatchNorm1d(60),
+                nn.Dropout(p=0.5),
+                nn.Linear(in_features=60, out_features=1, bias=True))
+        
     if args.model.startswith('efficientnet'):
         msize = int(args.model[-1])
         if msize<6:
@@ -259,7 +263,33 @@ def main():
     optimizer = optim.SGD(model.parameters(),lr=args.lr, 
                           momentum=0.9, weight_decay=args.weight_decay)
     scheduler = MultiStepLR(optimizer, milestones=[16,24,32,40], gamma=0.1)
-   
+    
+    train_csv=os.path.join(args.root, 'train.csv')
+    df  = pd.read_csv(train_csv)
+    #dist= df.groupby('diagnosis').count().values.reshape(5)
+    
+    data={'train':None,'val':None}
+    dataset={'train':None,'val':None}
+    dataloader={'train':None,'val':None}
+    data['train'], data['val'] = \
+        train_test_split(df.values.tolist(), test_size=0.05, random_state=42)  
+        
+    ext_csv = os.path.join(args.root, 'exter-resized', 'trainLabels_cropped.csv')
+    df2  = pd.read_csv(ext_csv, header=1 ,names = ['0','1','id_code', 'diagnosis']).iloc[:,2:4]
+    df2['diagnosis'] = df2['diagnosis'].astype(int)
+    data['train'] += df2.values.tolist()
+    df=df.append(df2)
+    print(df.groupby('diagnosis').count())
+    
+    print(len(data['train']),len(data['val']))
+    dataset={x: APTOSDataset(x, data[x], transform[x]) 
+            for x in ['train', 'val']}
+    dataloader={x: DataLoader(dataset[x],
+            batch_size=args.batch, shuffle = (x=='train'),
+            num_workers=args.workers,pin_memory=True)
+            for x in ['train', 'val']}
+    
+    
     for i in range(args.resume):
         scheduler.step()
     for epoch in range(args.resume,args.epochs):
