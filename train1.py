@@ -190,7 +190,7 @@ def main():
             num_workers=args.workers,pin_memory=True)
             for x in ['train', 'val']}
     
-    weight = torch.tensor([1, 2.49, 1.81, 3.8, 4.2])  #[1,1.7,1.4,2.6,5]
+    weight = torch.tensor([1, 2.49, 1.4, 4, 4.6])  #[1,1.7,1.4,2.6,5]
     if args.loss == 'mse' or args.loss == 'wmse2':
         criterion = nn.MSELoss()
     
