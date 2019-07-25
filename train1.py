@@ -51,7 +51,7 @@ parser.add_argument('--model', default='efficientnet-b5', type=str,
                     help='model name')
 parser.add_argument('--checkpoint', default=None, type=str,
                     help='Checkpoint state_dict file to resume training from') 
-parser.add_argument('--size', default=256, type=int,
+parser.add_argument('--size', default=224, type=int,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
