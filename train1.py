@@ -36,7 +36,7 @@ parser = argparse.ArgumentParser(
     description='train a model')
 parser.add_argument('--root', default='./',
                     type=str, help='directory of the data')
-parser.add_argument('--batch', default=32, type=int,
+parser.add_argument('--batch', default=16, type=int,
                     help='Batch size for training')
 parser.add_argument('--workers', default=4, type=int,
                     help='Number of workers used in dataloading')
@@ -54,7 +54,7 @@ parser.add_argument('--model', default='effnet', type=str,
                     help='model name')
 parser.add_argument('--checkpoint', default=None, type=str,
                     help='Checkpoint state_dict file to resume training from') 
-parser.add_argument('--size', default=456, type=int,
+parser.add_argument('--size', default=256, type=int,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
