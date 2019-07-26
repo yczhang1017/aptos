@@ -54,7 +54,7 @@ parser.add_argument('--model', default='effnet', type=str,
                     help='model name')
 parser.add_argument('--checkpoint', default=None, type=str,
                     help='Checkpoint state_dict file to resume training from') 
-parser.add_argument('--size', default=256, type=int,
+parser.add_argument('--size', default=384, type=int,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
@@ -168,7 +168,7 @@ class L1_cut_loss(nn.Module):
 
     
 def main():
-    weight = torch.tensor([1, 3.2, 1.6, 3, 6])  #[1,1.7,1.4,2.6,5]
+    weight = torch.tensor([1,1.7,1.4,2.6,5])  #[1,1.7,1.4,2.6,5]
     if args.loss == 'mse' or args.loss == 'wmse2':
         criterion = nn.MSELoss()
     
@@ -187,7 +187,7 @@ def main():
     if args.model == 'effnet':
         blocks_args, global_params = get_model_params('efficientnet-b5', None)
         blocks_args.append(
-                BlockArgs(kernel_size=5, num_repeat=3, input_filters=320, output_filters=480, 
+                BlockArgs(kernel_size=3, num_repeat=3, input_filters=320, output_filters=480, 
                           expand_ratio=6, id_skip=True, stride=[2], se_ratio=0.25))
         model = EfficientNet(blocks_args,global_params)
         pretrained_dict = model_zoo.load_url(url_map['efficientnet-b5'])

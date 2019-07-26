@@ -10,7 +10,7 @@ from PIL import Image
 from torchvision.transforms import transforms
 import cv2
 import torch
-size=512
+size=640
 transform=transforms.Compose([
         transforms.Resize(size)
      ]) 
@@ -72,6 +72,21 @@ def load_ben_color(path, sigmaX=20):
     return image
 
 
+def crop_black(im,flag):
+    x,y,r=flag
+    w,h = im.size
+    x1= max(x-r,0)
+    y1= max(y-r,0)
+    x2= min(x+r,w)
+    y2= min(y+r,h)
+    if x1>0 or y1>0 or x2<w or y2<h:
+        print(f,':',flag,(w,h),(x1,x2,y1,y2))
+        return im.crop((x1,y1,x2,y2))
+
+def crop_circle(im,flag):
+    x,y,r=flag
+    return im.crop((x-r,y-r,x+r,y+r)).resize((presize,presize),Image.BILINEAR)
+
 dirs=['train_image', 'exter-resized/resized_train_cropped']
 outputs=['train512', 'prev512']
 
@@ -89,21 +104,8 @@ for folder, output in zip(dirs,outputs):
             w,h = im.size
             flag = circle(im)
             if flag:
-                x,y,r=flag
-                x1= max(x-r,0)
-                y1= max(y-r,0)
-                x2= min(x+r,w)
-                y2= min(y+r,h)
-                if x1>0 or y1>0 or x2<w or y2<h:
-                    print(f,':',flag,(w,h),(x1,x2,y1,y2))
-                    im=im.crop((x1,y1,x2,y2))
-            im=transform(im)
+                im=crop_circle(im,flag)       
             im.save(os.path.join(output,name+'.jpeg'))
-            '''
-            im = load_ben_color(os.path.join(folder,f))
-            im = Image.fromarray(im)
-            im.save(os.path.join(output,name+'.jpeg'))
-            '''
             tensor = totensor(im)
             cnt+=1
             mean += tensor.mean(dim=(1,2)) 
