@@ -85,7 +85,7 @@ def crop_black(im,flag):
 
 def crop_circle(im,flag):
     x,y,r=flag
-    return im.crop((x-r,y-r,x+r,y+r)).resize((presize,presize),Image.BILINEAR)
+    return im.crop((x-r,y-r,x+r,y+r)).resize((size,size),Image.BILINEAR)
 
 dirs=['train_image', 'exter-resized/resized_train_cropped']
 outputs=['train512', 'prev512']
