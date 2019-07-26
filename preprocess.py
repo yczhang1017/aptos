@@ -88,7 +88,7 @@ def crop_circle(im,flag):
     return im.crop((x-r,y-r,x+r,y+r)).resize((size,size),Image.BILINEAR)
 
 dirs=['train_image', 'exter-resized/resized_train_cropped']
-outputs=['train512', 'prev512']
+outputs=['train'+str(size), 'prev'+str(size)]
 
 cnt = 0
 mean= torch.zeros((3))
