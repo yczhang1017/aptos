@@ -91,8 +91,6 @@ dirs=['train_image', 'exter-resized/resized_train_cropped']
 outputs=['train'+str(size), 'prev'+str(size)]
 
 cnt = 0
-mean= torch.zeros((3))
-std= torch.zeros((3))
 
 for folder, output in zip(dirs,outputs):
     if not os.path.exists(output):
@@ -106,13 +104,7 @@ for folder, output in zip(dirs,outputs):
             if flag:
                 im=crop_circle(im,flag)       
             im.save(os.path.join(output,name+'.jpeg'))
-            tensor = totensor(im)
             cnt+=1
-            mean += tensor.mean(dim=(1,2)) 
-            std += tensor.std(dim=(1,2))
+            
 
-
-print(cnt)
-print(mean/cnt)
-print(std/cnt)
 
