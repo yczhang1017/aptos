@@ -60,6 +60,11 @@ parser.add_argument('--print', default=10, type=int,
 parser.add_argument('--loss', default='wmse2',  choices=['mse', 'wmse','huber','l1_cut', 'wmse2'], type=str,
                     help='type of loss')
 
+
+parser.add_argument('--data1', default='train', type=str,
+                    help='previous competition dataset directory')
+parser.add_argument('--data2', default='prev', type=str,
+                    help='dataset directory')
 args = parser.parse_args()
 
 if not os.path.exists(args.save_folder):
@@ -123,9 +128,9 @@ class APTOSDataset(Dataset):
             x = self.data[idx]
         
         if '_' in x:
-            root='exter-resized/resized_train_cropped/'
+            root=args.data2
         else:
-            root='train1024'
+            root=args.data1
         
         img_name = os.path.join(root,
                                 x + '.jpeg')
