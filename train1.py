@@ -21,7 +21,6 @@ from kappas import quadratic_weighted_kappa
 from torch.utils.data import Dataset, DataLoader
 
 from efficientnet_pytorch import EfficientNet
-
 from torch.utils import model_zoo
 from efficientnet_pytorch.utils import (
     get_model_params,
@@ -50,11 +49,11 @@ parser.add_argument('--weight_decay', default=5e-4, type=float,
                     help='Weight decay')
 parser.add_argument('--resume', default=0, type=int,
                     help='epoch number to be resumed at')
-parser.add_argument('--model', default='effnet', type=str,
+parser.add_argument('--model', default='pnasnet5large', type=str,
                     help='model name')
 parser.add_argument('--checkpoint', default=None, type=str,
                     help='Checkpoint state_dict file to resume training from') 
-parser.add_argument('--size', default=384, type=int,
+parser.add_argument('--size', default=331, type=int,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
@@ -66,8 +65,8 @@ args = parser.parse_args()
 if not os.path.exists(args.save_folder):
     os.mkdir(args.save_folder)
 
-mean=[0.485, 0.456, 0.406]
-std=[0.229, 0.224, 0.225]
+mean=[0.5, 0.5, 0.5]
+std=[0.5, 0.5, 0.5]
 transform= { 
  'train':transforms.Compose([
      transforms.RandomResizedCrop(args.size,scale=(0.2, 1.0), 
