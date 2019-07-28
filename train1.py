@@ -61,9 +61,9 @@ parser.add_argument('--loss', default='wmse2',  choices=['mse', 'wmse','huber','
                     help='type of loss')
 
 
-parser.add_argument('--data1', default='train', type=str,
+parser.add_argument('--data1', default='train_image', type=str,
                     help='previous competition dataset directory')
-parser.add_argument('--data2', default='prev', type=str,
+parser.add_argument('--data2', default='exter-resized/resized_train_cropped', type=str,
                     help='dataset directory')
 args = parser.parse_args()
 
