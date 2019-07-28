@@ -129,11 +129,13 @@ class APTOSDataset(Dataset):
         
         if '_' in x:
             root=args.data2
+            img_name = os.path.join(root,
+                                x + '.jpeg')
         else:
             root=args.data1
+            img_name = os.path.join(root,
+                                x + '.png')
         
-        img_name = os.path.join(root,
-                                x + '.jpeg')
         image = PIL.Image.open(img_name)
         image = self.transform(image)
         if self.phase in ['train','val']:
