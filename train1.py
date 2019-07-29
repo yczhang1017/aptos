@@ -70,12 +70,13 @@ args = parser.parse_args()
 if not os.path.exists(args.save_folder):
     os.mkdir(args.save_folder)
 
-mean=[0.5, 0.5, 0.5]
-std=[0.5, 0.5, 0.5]
+mean=[0.4402, 0.2334, 0.0674]
+std=[0.2392, 0.1326, 0.0470]
 transform= { 
  'train':transforms.Compose([
-     transforms.RandomResizedCrop(args.size,scale=(0.4, 1.0), 
-                                  ratio=(0.9, 1.111111), interpolation=2),
+     transforms.RandomRotation(25, resample=PIL.Image.BILINEAR),
+     transforms.RandomResizedCrop(args.size,scale=(0.2, 1.0), 
+                                  ratio=(0.8, 1.25), interpolation=PIL.Image.BILINEAR),
      transforms.ColorJitter(0.2,0.1,0.1,0.04),
      transforms.RandomHorizontalFlip(),
      transforms.RandomVerticalFlip(),
@@ -84,7 +85,7 @@ transform= {
      ]),      
  'val':transforms.Compose([
      transforms.Resize((args.size,args.size),
-                        interpolation=2),
+                        interpolation=PIL.Image.BILINEAR),
      transforms.ToTensor(),
      transforms.Normalize(mean,std)
      ])}
