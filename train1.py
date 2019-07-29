@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 
-import PIL
+from PIL import Image
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -74,9 +74,9 @@ mean=[0.4402, 0.2334, 0.0674]
 std=[0.2392, 0.1326, 0.0470]
 transform= { 
  'train':transforms.Compose([
-     transforms.RandomRotation(25, resample=PIL.Image.BILINEAR),
+     transforms.RandomRotation(25, resample=Image.BILINEAR),
      transforms.RandomResizedCrop(args.size,scale=(0.2, 1.0), 
-                                  ratio=(0.8, 1.25), interpolation=PIL.Image.BILINEAR),
+                                  ratio=(0.8, 1.25), interpolation=Image.BILINEAR),
      transforms.ColorJitter(0.2,0.1,0.1,0.04),
      transforms.RandomHorizontalFlip(),
      transforms.RandomVerticalFlip(),
@@ -85,7 +85,7 @@ transform= {
      ]),      
  'val':transforms.Compose([
      transforms.Resize((args.size,args.size),
-                        interpolation=PIL.Image.BILINEAR),
+                        interpolation=Image.BILINEAR),
      transforms.ToTensor(),
      transforms.Normalize(mean,std)
      ])}
@@ -137,7 +137,7 @@ class APTOSDataset(Dataset):
             img_name = os.path.join(root,
                                 x + '.png')
         
-        image = PIL.Image.open(img_name)
+        image = Image.open(img_name)
         image = self.transform(image)
         if self.phase in ['train','val']:
             return image, y
