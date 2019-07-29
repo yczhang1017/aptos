@@ -53,7 +53,7 @@ parser.add_argument('--model', default='pnasnet5large', type=str,
                     help='model name')
 parser.add_argument('--checkpoint', default=None, type=str,
                     help='Checkpoint state_dict file to resume training from') 
-parser.add_argument('--size', default=224, type=int,
+parser.add_argument('--size', default=320, type=int,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
@@ -74,8 +74,8 @@ mean=[0.5, 0.5, 0.5]
 std=[0.5, 0.5, 0.5]
 transform= { 
  'train':transforms.Compose([
-     transforms.RandomResizedCrop(args.size,scale=(0.2, 1.0), 
-                                  ratio=(0.8, 1.25), interpolation=2),
+     transforms.RandomResizedCrop(args.size,scale=(0.4, 1.0), 
+                                  ratio=(0.9, 1.111111), interpolation=2),
      transforms.ColorJitter(0.2,0.1,0.1,0.04),
      transforms.RandomHorizontalFlip(),
      transforms.RandomVerticalFlip(),
@@ -174,7 +174,7 @@ class L1_cut_loss(nn.Module):
 
     
 def main():
-    weight = torch.tensor([1,1.7,1.4,2.6,5])  #[1,1.7,1.4,2.6,5]
+    weight = torch.tensor([1,1.9,1.4,2.8,5])  #[1,1.7,1.4,2.6,5]
     if args.loss == 'mse' or args.loss == 'wmse2':
         criterion = nn.MSELoss()
     
