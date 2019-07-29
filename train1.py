@@ -241,15 +241,15 @@ def main():
         model.avg_pool = nn.AdaptiveAvgPool2d(1)
         model.last_linear = nn.Sequential( 
                 nn.BatchNorm1d(4320),
-                nn.Dropout(p=0.4),
+                nn.Dropout(p=0.25),
                 nn.Linear(in_features=4320, out_features=600, bias=True),
                 nn.ReLU(),
                 nn.BatchNorm1d(600),
-                nn.Dropout(p=0.4),
+                nn.Dropout(p=0.25),
                 nn.Linear(in_features=600, out_features=100, bias=True),
                 nn.ReLU(),
                 nn.BatchNorm1d(100),
-                nn.Dropout(p=0.4),
+                nn.Dropout(p=0.25),
                 nn.Linear(in_features=100, out_features=1, bias=True),
                 )
     elif args.model == 'nasnetv2':
