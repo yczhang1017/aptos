@@ -333,7 +333,7 @@ def main():
     print(df_test.groupby('diagnosis').count())
     
     
-    data={'train':df, 'test':df_test}
+    data={'train':df, 'val':df_test}
     dataset={x: APTOSDataset(x, data[x], transform[x]) 
             for x in ['train', 'val']}
     dataloader={x: DataLoader(dataset[x],
