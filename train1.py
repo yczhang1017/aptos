@@ -59,12 +59,9 @@ parser.add_argument('--print', default=10, type=int,
                     help='print freq')
 parser.add_argument('--loss', default='wmse2',  choices=['mse', 'wmse','huber','l1_cut', 'wmse2'], type=str,
                     help='type of loss')
-
-
 parser.add_argument('--dataset', default='train640,prev640,IEEE640,messidor640', type=str,
                     help='previous competition dataset directory')
-parser.add_argument('--label', default='train640,prev640,IEEE640,messidor640', type=str,
-                    help='previous competition dataset directory')
+
 
 args = parser.parse_args()
 
@@ -139,7 +136,7 @@ class APTOSDataset(Dataset):
             root = self.data_path[0]
         
         img_name = os.path.join(root,
-                                row['id_code'] +'.jpeg')
+                                row['id'] +'.jpeg')
         image = Image.open(img_name)
         image = self.transform(image)
         if self.phase in ['train','val']:
@@ -286,14 +283,18 @@ def main():
     train_csv=os.path.join(args.root, 'train.csv')
     #dist= df.groupby('diagnosis').count().values.reshape(5)
     df, df_test = \
-        train_test_split(pd.read_csv(train_csv), test_size=0.05, random_state=42)
+        train_test_split(
+                pd.read_csv(train_csv, header=1, names = ['id', 'diagnosis'], 
+                            dtype={'id':str, 'diagnosis':np.int8}), 
+                    test_size=0.05, random_state=42)
     df['dataset'] = 0
     print('Current Competition:')
     print(df.groupby('diagnosis').count())    
     
     #Previous dataset    
     ext_csv = os.path.join(args.root, 'exter-resized', 'trainLabels_cropped.csv')
-    df2  = pd.read_csv(ext_csv, header=1 ,names = ['id_code', 'diagnosis'], usecols=[2,3])
+    df2  = pd.read_csv(ext_csv,header=1,names = ['id','diagnosis'],
+                       usecols=[2,3], dtype={'id':str, 'diagnosis':np.int8})
     df2['diagnosis'] = df2['diagnosis'].astype(int)
     df2['dataset'] = 1
     print('Previous Dataset:')
@@ -305,15 +306,19 @@ def main():
     for i in range(1,4):
         for j in range(1,5):
             df3=df3.append(pd.read_excel(
-                    'messidor/Annotation_Base'+str(i)+str(j)+'.xls',
-                    names =['id_code', 'diagnosis'], usecols=[0,2]))
+                    'messidor/Annotation_Base'+str(i)+str(j)+'.xls',header=1,
+                    names =['id', 'diagnosis'], usecols=[0,2], 
+                    dtype={'id':str, 'diagnosis':np.int8}))
     df3['dataset'] = 2
     print('Messidor:')
     print(df3.groupby('diagnosis').count())
     
     #messidor
     df4=pd.read_csv('IEEE/label/train.csv',names =['id_code', 'diagnosis'], usecols=[0,1])
-    df4=df4.append(pd.read_csv('IEEE/label/test.csv',names =['id_code', 'diagnosis'], usecols=[0,1]))
+    df4=df4.append(pd.read_csv(
+            'IEEE/label/test.csv',head=1,
+            names =['id', 'diagnosis'], usecols=[0,1]),
+            dtype={'id':str, 'diagnosis':np.int8})
     df4['dataset'] = 3
     print('IEEE')
     print(df4.groupby('diagnosis').count())
