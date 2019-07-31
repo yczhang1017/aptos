@@ -317,8 +317,8 @@ def main():
     df4=pd.read_csv('IEEE/label/train.csv',names =['id_code', 'diagnosis'], usecols=[0,1])
     df4=df4.append(pd.read_csv(
             'IEEE/label/test.csv',header=1,
-            names =['id', 'diagnosis'], usecols=[0,1]),
-            dtype={'id':str, 'diagnosis':np.int8})
+            names =['id', 'diagnosis'], usecols=[0,1],
+            dtype={'id':str, 'diagnosis':np.int8}))
     df4['dataset'] = 3
     print('IEEE')
     print(df4.groupby('diagnosis').count())
