@@ -77,7 +77,7 @@ mean=[0.4402, 0.2334, 0.0674]
 std=[0.2392, 0.1326, 0.0470]
 
 class CenterRandomCrop(object):
-    def __init__(self, size, xscale=(0.7, 1.0), yscale=(0.5, 1.0), interpolation=Image.BILINEAR):
+    def __init__(self, size, xscale=(0.56, 1.0), yscale=(0.4, 1.0), interpolation=Image.BILINEAR):
         if isinstance(size, tuple):
             self.size = size
         else:
@@ -107,7 +107,7 @@ transform= {
      #transforms.RandomResizedCrop(args.size,scale=(0.2, 1.0), 
      #                             ratio=(0.8, 1.25), interpolation=Image.BILINEAR),
      CenterRandomCrop(args.size),
-     transforms.ColorJitter(0.2,0.1,0.1,0.04),
+     transforms.ColorJitter(0.2,0.1,0.1,0.03),
      transforms.RandomHorizontalFlip(),
      transforms.RandomVerticalFlip(),
      transforms.ToTensor(),
