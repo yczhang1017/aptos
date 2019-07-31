@@ -9,6 +9,10 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.optim.lr_scheduler import MultiStepLR as MultiStepLR
 from torchvision.transforms import transforms
+import random 
+from torchvision.transforms.transforms import _pil_interpolation_to_str 
+from torchvision.transforms import functional as F
+
 import torch.backends.cudnn as cudnn
 import time
 import argparse
@@ -19,6 +23,7 @@ from nasnetv2 import nasnetv2
 from sklearn.metrics import cohen_kappa_score, confusion_matrix
 from kappas import quadratic_weighted_kappa
 from torch.utils.data import Dataset, DataLoader
+
 
 from efficientnet_pytorch import EfficientNet
 from torch.utils import model_zoo
@@ -70,11 +75,38 @@ if not os.path.exists(args.save_folder):
 
 mean=[0.4402, 0.2334, 0.0674]
 std=[0.2392, 0.1326, 0.0470]
+
+class CenterRandomCrop(object):
+    def __init__(self, size, xscale=(0.7, 1.0), yscale=(0.5, 1.0), interpolation=Image.BILINEAR):
+        if isinstance(size, tuple):
+            self.size = size
+        else:
+            self.size = (size, size)
+        self.interpolation = interpolation
+        self.xscale = xscale
+        self.yscale = yscale
+    def __call__(self, img):
+        xc = img.size[0]//2
+        yc = img.size[1]//2
+        xscale = random.uniform(*self.xscale)
+        yscale = random.uniform(*self.yscale)
+        w = round(xc*xscale)
+        h = round(yc*yscale)
+        return F.resized_crop(img,yc-h,xc-w,2*h,2*w, self.size, self.interpolation)
+    def __repr__(self):
+        interpolate_str = _pil_interpolation_to_str[self.interpolation]
+        format_string = self.__class__.__name__ + '(size={0}'.format(self.size)
+        format_string += ', xscale={0}'.format(tuple(round(s, 4) for s in self.xscale))
+        format_string += ', yscale={0}'.format(tuple(round(r, 4) for r in self.xscale))
+        format_string += ', interpolation={0})'.format(interpolate_str)
+        return format_string
+
 transform= { 
  'train':transforms.Compose([
-     transforms.RandomRotation(25, resample=Image.BILINEAR),
-     transforms.RandomResizedCrop(args.size,scale=(0.2, 1.0), 
-                                  ratio=(0.8, 1.25), interpolation=Image.BILINEAR),
+     transforms.RandomRotation(12, resample=Image.BILINEAR),
+     #transforms.RandomResizedCrop(args.size,scale=(0.2, 1.0), 
+     #                             ratio=(0.8, 1.25), interpolation=Image.BILINEAR),
+     CenterRandomCrop(args.size),
      transforms.ColorJitter(0.2,0.1,0.1,0.04),
      transforms.RandomHorizontalFlip(),
      transforms.RandomVerticalFlip(),
