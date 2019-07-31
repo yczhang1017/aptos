@@ -87,16 +87,19 @@ def crop_circle(im,flag):
     x,y,r=flag
     return im.crop((x-r,y-r,x+r,y+r)).resize((size,size),Image.BILINEAR)
 
-dirs=['train_image', 'exter-resized/resized_train_cropped']
-outputs=['train'+str(size), 'prev'+str(size)]
+#dirs=['train_image', 'exter-resized/resized_train_cropped']
+#outputs=['train'+str(size), 'prev'+str(size)]
+dirs   = ['IEEE/image/train', 'IEEE/image/test', 'messidor/image']
+exts = ['jpg','jpg', 'tif']
+outputs= ['IEEE640', 'IEEE640', 'messidor640']
 
 cnt = 0
 
-for folder, output in zip(dirs,outputs):
+for folder, output, ext in zip(dirs,outputs,exts):
     if not os.path.exists(output):
         os.mkdir(output)
     for f in os.listdir(folder):
-        if f.endswith('png') or f.endswith('jpeg'):
+        if f.endswith(ext):
             name,_ = f.split('.')
             im=Image.open(os.path.join(folder,f))
             w,h = im.size
