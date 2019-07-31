@@ -376,8 +376,8 @@ def main():
             for inputs,targets,data_weight in dataloader[phase]:
                 t1 = time.time()
                 batch = inputs.size(0)
-                inputs = inputs.to(device)                
-                targets= targets.to(device)
+                inputs = inputs.to(device).float()                
+                targets= targets.to(device).float()
                 data_weight = data_weight.to(device).float()
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
@@ -395,11 +395,11 @@ def main():
                 loss = loss.item() 
                 running_loss += loss * inputs.size(0)
                 propose=outputs.round().long().clamp(0,4)
-                correct = (propose==targets).sum().item()
+                correct = (propose==targets.long()).sum().item()
                 acc = correct/batch*100
                 running_correct +=correct
                 p=propose.cpu().tolist()
-                t=targets.cpu().tolist()
+                t=targets.long().cpu().tolist()
                 predict+=p
                 truth+=t
                 t2 = time.time()
