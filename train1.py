@@ -340,13 +340,16 @@ def main():
             num_workers=args.workers,pin_memory=True)
             for x in ['train', 'val']}
     
-    
+    flag = False
     for i in range(args.resume):
         scheduler.step()
     for epoch in range(args.resume,args.epochs):
         print('Epoch {}/{}'.format(epoch+1, args.epochs))
         print('-' * 10)
-        if epoch >= 3 and args.loss== 'wmse2':
+        
+        if (not flag) and epoch >= 3 and args.loss== 'wmse2':
+            flag = True
+        if flag:
             print('applying weights to loss:', weight)
             criterion = weighted_mse2(weight)
                 
@@ -373,7 +376,11 @@ def main():
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = model(inputs).reshape(batch)
-                    loss = criterion(outputs, targets.float(), data_weight)
+                    if flag:
+                        loss = criterion(outputs, targets.float(), data_weight)
+                    else:
+                        loss = criterion(outputs, targets.float())
+                        
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
