@@ -282,7 +282,7 @@ def main():
     
     train_csv=os.path.join(args.root, 'train.csv')
     #dist= df.groupby('diagnosis').count().values.reshape(5)
-    df, df_test = \
+    df, df_val = \
         train_test_split(
                 pd.read_csv(train_csv, header=1, names = ['id', 'diagnosis'], 
                             dtype={'id':str, 'diagnosis':np.int8}), 
@@ -330,10 +330,10 @@ def main():
     print('Overall train:')
     print(df.groupby('diagnosis').count())
     print('Overall test:')
-    print(df_test.groupby('diagnosis').count())
+    print(df_val.groupby('diagnosis').count())
     
     
-    data={'train':df, 'val':df_test}
+    data={'train':df, 'val':df_val}
     dataset={x: APTOSDataset(x, data[x], transform[x]) 
             for x in ['train', 'val']}
     dataloader={x: DataLoader(dataset[x],
