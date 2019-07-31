@@ -320,12 +320,12 @@ def main():
     
     train_csv=os.path.join(args.root, 'train.csv')
     #dist= df.groupby('diagnosis').count().values.reshape(5)
+    df1 = pd.read_csv(train_csv, header=1, names = ['id', 'diagnosis'], 
+                            dtype={'id':str, 'diagnosis':np.int8})
+    df1['dataset'] = 0
     df, df_val = \
-        train_test_split(
-                pd.read_csv(train_csv, header=1, names = ['id', 'diagnosis'], 
-                            dtype={'id':str, 'diagnosis':np.int8}), 
-                    test_size=0.05, random_state=42)
-    df['dataset'] = 0
+        train_test_split(df1, test_size=0.1, random_state=42)
+    
     print('Current Competition:')
     print(df.groupby('diagnosis').count())    
     
