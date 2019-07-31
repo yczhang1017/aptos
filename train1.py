@@ -61,10 +61,11 @@ parser.add_argument('--loss', default='wmse2',  choices=['mse', 'wmse','huber','
                     help='type of loss')
 
 
-parser.add_argument('--data1', default='train640', type=str,
+parser.add_argument('--dataset', default='train640,prev640,IEEE640,messidor640', type=str,
                     help='previous competition dataset directory')
-parser.add_argument('--data2', default='prev640', type=str,
-                    help='dataset directory')
+parser.add_argument('--label', default='train640,prev640,IEEE640,messidor640', type=str,
+                    help='previous competition dataset directory')
+
 args = parser.parse_args()
 
 if not os.path.exists(args.save_folder):
@@ -113,33 +114,36 @@ def histogram(ratings, min_rating=None, max_rating=None):
 
 
 
+
 class APTOSDataset(Dataset):
     def __init__(self, phase, data ,transform):
         self.phase=phase
         self.data=data
         self.transform = transform
-
+        self.data_path = args.dataset.split(',')
+        self.weights = [1, 0.1, 0.8, 1]
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
         if self.phase in ['train','val']:
-            x, y = self.data[idx]
+            row = self.data.iloc[idx]
+            d = int(row['dataset'])
+            root = self.data_path[d]
+            y = float(row['diagnosis'])
+            if d==2:
+                y=(y+0.5)/4*5-0.5
+            
         elif self.phase == 'test' :
-            x = self.data[idx]
+            row = self.data.iloc[idx]
+            root = self.data_path[0]
         
-        if '_' in x:
-            root=args.data2
-            
-        else:
-            root=args.data1
-            
         img_name = os.path.join(root,
-                                x + '.jpeg')
+                                row['id_code'] +'.jpeg')
         image = Image.open(img_name)
         image = self.transform(image)
         if self.phase in ['train','val']:
-            return image, y
+            return image, y, self.weights[d]
         elif self.phase == 'test' :
             return image 
 '''        
@@ -162,6 +166,15 @@ class weighted_mse(nn.Module):
     def forward(self, input, target):
         truth=target.long()
         return torch.mean(self.weight[truth]*(input-target)*(input-target))
+
+class weighted_mse2(nn.Module):
+    def __init__(self, weight):
+        super(weighted_mse, self).__init__()
+        self.weight=weight.float().to(device)
+    def forward(self, input, target, data_weight):
+        truth=target.long()
+        return torch.mean(self.weight[truth]*(input-target)*(input-target)*data_weight)
+
     
 class L1_cut_loss(nn.Module):
     def __init__(self, weight):
@@ -271,23 +284,47 @@ def main():
     scheduler = MultiStepLR(optimizer, milestones=[16,24,32,40], gamma=0.1)
     
     train_csv=os.path.join(args.root, 'train.csv')
-    df  = pd.read_csv(train_csv)
     #dist= df.groupby('diagnosis').count().values.reshape(5)
+    df, df_test = \
+        train_test_split(pd.read_csv(train_csv), test_size=0.05, random_state=42)
+    df['dataset'] = 0
+    print('Current Competition:')
+    print(df.groupby('diagnosis').count())    
     
-    data={'train':None,'val':None}
-    dataset={'train':None,'val':None}
-    dataloader={'train':None,'val':None}
-    data['train'], data['val'] = \
-        train_test_split(df.values.tolist(), test_size=0.05, random_state=42)  
-        
+    #Previous dataset    
     ext_csv = os.path.join(args.root, 'exter-resized', 'trainLabels_cropped.csv')
-    df2  = pd.read_csv(ext_csv, header=1 ,names = ['0','1','id_code', 'diagnosis']).iloc[:,2:4]
+    df2  = pd.read_csv(ext_csv, header=1 ,names = ['id_code', 'diagnosis'], usecols=[2,3])
     df2['diagnosis'] = df2['diagnosis'].astype(int)
-    data['train'] += df2.values.tolist()
+    df2['dataset'] = 1
+    print('Previous Dataset:')
+    print(df2.groupby('diagnosis').count())
     df=df.append(df2)
-    print(df.groupby('diagnosis').count())
     
-    print(len(data['train']),len(data['val']))
+    #messidor
+    df3=pd.DataFrame()
+    for i in range(1,4):
+        for j in range(1,5):
+            df3=df3.append(pd.read_excel(
+                    'messidor/Annotation_Base'+str(i)+str(j)+'.xls',
+                    names =['id_code', 'diagnosis'], usecols=[0,2]))
+    df3['dataset'] = 2
+    print('Messidor:')
+    print(df3.groupby('diagnosis').count())
+    
+    #messidor
+    df4=pd.read_csv('IEEE/label/train.csv',names =['id_code', 'diagnosis'], usecols=[0,1])
+    df4=df4.append(pd.read_csv('IEEE/label/test.csv',names =['id_code', 'diagnosis'], usecols=[0,1]))
+    df4['dataset'] = 3
+    print('IEEE')
+    print(df4.groupby('diagnosis').count())
+    df=df.append(df4)
+    print('Overall train:')
+    print(df.groupby('diagnosis').count())
+    print('Overall test:')
+    print(df_test.groupby('diagnosis').count())
+    
+    
+    data={'train':df, 'test':df_test}
     dataset={x: APTOSDataset(x, data[x], transform[x]) 
             for x in ['train', 'val']}
     dataloader={x: DataLoader(dataset[x],
@@ -303,7 +340,7 @@ def main():
         print('-' * 10)
         if epoch >= 3 and args.loss== 'wmse2':
             print('applying weights to loss:', weight)
-            criterion = weighted_mse(weight)
+            criterion = weighted_mse2(weight)
                 
         for phase in ['train','val']:
             if phase == 'train':
@@ -319,15 +356,16 @@ def main():
             predict=[]
             truth=[]
             
-            for inputs,targets in dataloader[phase]:
+            for inputs,targets,data_weight in dataloader[phase]:
                 t1 = time.time()
                 batch = inputs.size(0)
                 inputs = inputs.to(device)                
                 targets= targets.to(device)
+                data_weight = data_weight.to(device)
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = model(inputs).reshape(batch)
-                    loss = criterion(outputs, targets.float())
+                    loss = criterion(outputs, targets.float(), data_weight)
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
