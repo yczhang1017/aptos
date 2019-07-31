@@ -378,7 +378,7 @@ def main():
                 batch = inputs.size(0)
                 inputs = inputs.to(device)                
                 targets= targets.to(device)
-                data_weight = data_weight.to(device)
+                data_weight = data_weight.to(device).float()
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = model(inputs).reshape(batch)
