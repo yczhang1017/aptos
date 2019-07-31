@@ -57,7 +57,7 @@ parser.add_argument('--size', default=320, type=int,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
-parser.add_argument('--loss', default='wmse2',  choices=['mse', 'wmse','huber','l1_cut', 'wmse2'], type=str,
+parser.add_argument('--loss', default='data_wmse2',  choices=['mse', 'wmse','huber','l1_cut', 'wmse2', 'data_wmse2'], type=str,
                     help='type of loss')
 parser.add_argument('--dataset', default='train640,prev640,messidor640,IEEE640', type=str,
                     help='previous competition dataset directory')
@@ -164,9 +164,15 @@ class weighted_mse(nn.Module):
         truth=target.long()
         return torch.mean(self.weight[truth]*(input-target)*(input-target))
 
-class weighted_mse2(nn.Module):
+class data_mse(nn.Module):
+    def __init__(self):
+        super(data_mse, self).__init__()
+    def forward(self, input, target, data_weight):
+        return torch.mean((input-target)*(input-target)*data_weight)
+    
+class data_weighted_mse(nn.Module):
     def __init__(self, weight):
-        super(weighted_mse, self).__init__()
+        super(data_weighted_mse, self).__init__()
         self.weight=weight.float().to(device)
     def forward(self, input, target, data_weight):
         truth=target.long()
@@ -185,16 +191,16 @@ class L1_cut_loss(nn.Module):
     
 def main():
     weight = torch.tensor([1,1.9,1.4,2.8,5])  #[1,1.7,1.4,2.6,5]
-    if args.loss == 'mse' or args.loss == 'wmse2':
-        criterion = nn.MSELoss()
     
+    if args.loss == 'data_wmse' or args.loss == 'data_wmse2':
+        criterion = data_mse()
+    elif args.loss == 'mse' or args.loss == 'wmse2':
+        criterion = nn.MSELoss()
     elif args.loss == 'wmse':
         print(weight)
         criterion = weighted_mse(weight)
-        
     elif args.loss== 'huber':
         criterion = nn.SmoothL1Loss()
-        
     elif args.loss== 'l1_cut':
         print(weight)
         criterion = L1_cut_loss(weight)
@@ -347,11 +353,11 @@ def main():
         print('Epoch {}/{}'.format(epoch+1, args.epochs))
         print('-' * 10)
         
-        if (not flag) and epoch >= 3 and args.loss== 'wmse2':
+        if (not flag) and epoch >= 3 and args.loss.endswith('2'):
             flag = True
-        if flag:
+        if flag and args.loss == 'data_wmse2':
             print('applying weights to loss:', weight)
-            criterion = weighted_mse2(weight)
+            criterion = data_weighted_mse(weight)
                 
         for phase in ['train','val']:
             if phase == 'train':
@@ -376,7 +382,7 @@ def main():
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = model(inputs).reshape(batch)
-                    if flag:
+                    if args.loss.startswith('data'):
                         loss = criterion(outputs, targets.float(), data_weight)
                     else:
                         loss = criterion(outputs, targets.float())
