@@ -64,7 +64,7 @@ parser.add_argument('--print', default=10, type=int,
                     help='print freq')
 parser.add_argument('--loss', default='data_wmse2',  choices=['mse', 'wmse','huber','l1_cut', 'wmse2', 'data_wmse2'], type=str,
                     help='type of loss')
-parser.add_argument('--dataset', default='train640,prev640,messidor640,IEEE640', type=str,
+parser.add_argument('--dataset', default='train640,prev640,IEEE640,messidor640', type=str,
                     help='previous competition dataset directory')
 
 
