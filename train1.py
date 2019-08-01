@@ -58,7 +58,7 @@ parser.add_argument('--model', default='pnasnet5large', type=str,
                     help='model name')
 parser.add_argument('--checkpoint', default=None, type=str,
                     help='Checkpoint state_dict file to resume training from') 
-parser.add_argument('--size', default=320, type=int,
+parser.add_argument('--size', default=224, type=int,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
@@ -107,7 +107,7 @@ transform= {
      #transforms.RandomResizedCrop(args.size,scale=(0.2, 1.0), 
      #                             ratio=(0.8, 1.25), interpolation=Image.BILINEAR),
      CenterRandomCrop(args.size),
-     transforms.ColorJitter(0.2,0.1,0.1,0.03),
+     transforms.ColorJitter(0.2,0.1,0.1,0.04),
      transforms.RandomHorizontalFlip(),
      transforms.RandomVerticalFlip(),
      transforms.ToTensor(),
@@ -150,7 +150,7 @@ class APTOSDataset(Dataset):
         self.data=data
         self.transform = transform
         self.data_path = args.dataset.split(',')
-        self.weights = [1, 0.1, 0.8, 1]
+        self.weights = [1, 0.2, 1, 0.8]
     def __len__(self):
         return len(self.data)
 
@@ -160,7 +160,7 @@ class APTOSDataset(Dataset):
             d = int(row['dataset'])
             root = self.data_path[d]
             y = float(row['diagnosis'])
-            if d==2:
+            if d==3:
                 y=(y+0.5)/4*5-0.5
             
         elif self.phase == 'test' :
@@ -222,7 +222,7 @@ class L1_cut_loss(nn.Module):
 
     
 def main():
-    weight = torch.tensor([1,1.9,1.4,2.8,5])  #[1,1.7,1.4,2.6,5]
+    weight = torch.tensor([1,1.7,1.4,2.6,5])  #[1,1.7,1.4,2.6,5]
     
     if args.loss == 'data_wmse' or args.loss == 'data_wmse2':
         criterion = data_mse()
@@ -339,31 +339,36 @@ def main():
     print(df2.groupby('diagnosis').count())
     df=df.append(df2)
     
-    #messidor
-    df3=pd.DataFrame()
-    for i in range(1,4):
-        for j in range(1,5):
-            df3=df3.append(pd.read_excel(
-                    'messidor/Annotation_Base'+str(i)+str(j)+'.xls',header=1,
-                    names =['id', 'diagnosis'], usecols=[0,2], 
-                    dtype={'id':str, 'diagnosis':np.int8}))
-    df3['dataset'] = 2
-    print('Messidor:')
-    print(df3.groupby('diagnosis').count())
     
-    #messidor
-    df4=pd.read_csv(
+    #IEEE
+    df3=pd.read_csv(
             'IEEE/label/train.csv',header=1,
             names =['id', 'diagnosis'], usecols=[0,1],
             dtype={'id':str, 'diagnosis':np.int8})
-    df4=df4.append(pd.read_csv(
+    df3=df3.append(pd.read_csv(
             'IEEE/label/test.csv',header=1,
             names =['id', 'diagnosis'], usecols=[0,1],
             dtype={'id':str, 'diagnosis':np.int8}))
-    df4['dataset'] = 3
+    df3['dataset'] =2
     print('IEEE')
+    print(df3.groupby('diagnosis').count())
+    df=df.append(df3)
+    
+    #messidor
+    '''
+    df4=pd.DataFrame()
+    for i in range(1,4):
+        for j in range(1,5):
+            df4=df4.append(pd.read_excel(
+                    'messidor/Annotation_Base'+str(i)+str(j)+'.xls',header=1,
+                    names =['id', 'diagnosis'], usecols=[0,2], 
+                    dtype={'id':str, 'diagnosis':np.int8}))
+    df4['dataset'] = 3
+    print('Messidor:')
     print(df4.groupby('diagnosis').count())
-    df=df.append(df4)
+    '''
+    
+    
     print('Overall train:')
     print(df.groupby('diagnosis').count())
     print('Overall val:')
