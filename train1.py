@@ -222,7 +222,7 @@ class L1_cut_loss(nn.Module):
 
     
 def main():
-    weight = torch.tensor([1,1.7,1.4,2.6,5])  #[1,1.7,1.4,2.6,5]
+    weight = torch.tensor([1, 1.88, 1.27, 2.4, 2.4])  #[1,1.7,1.4,2.6,5]
     
     if args.loss == 'data_wmse' or args.loss == 'data_wmse2':
         criterion = data_mse()
