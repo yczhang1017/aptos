@@ -9,9 +9,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.optim.lr_scheduler import MultiStepLR as MultiStepLR
 from torchvision.transforms import transforms
-import random 
-from torchvision.transforms.transforms import _pil_interpolation_to_str 
-from torchvision.transforms import functional as F
+
 
 import torch.backends.cudnn as cudnn
 import time
@@ -58,7 +56,7 @@ parser.add_argument('--model', default='pnasnet5large', type=str,
                     help='model name')
 parser.add_argument('--checkpoint', default=None, type=str,
                     help='Checkpoint state_dict file to resume training from') 
-parser.add_argument('--size', default=224, type=int,
+parser.add_argument('--size', default=320, type=int,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
@@ -76,37 +74,11 @@ if not os.path.exists(args.save_folder):
 mean=[0.4402, 0.2334, 0.0674]
 std=[0.2392, 0.1326, 0.0470]
 
-class CenterRandomCrop(object):
-    def __init__(self, size, xscale=(0.56, 1.0), yscale=(0.4, 1.0), interpolation=Image.BILINEAR):
-        if isinstance(size, tuple):
-            self.size = size
-        else:
-            self.size = (size, size)
-        self.interpolation = interpolation
-        self.xscale = xscale
-        self.yscale = yscale
-    def __call__(self, img):
-        xc = img.size[0]//2
-        yc = img.size[1]//2
-        xscale = random.uniform(*self.xscale)
-        yscale = random.uniform(*self.yscale)
-        w = round(xc*xscale)
-        h = round(yc*yscale)
-        return F.resized_crop(img,yc-h,xc-w,2*h,2*w, self.size, self.interpolation)
-    def __repr__(self):
-        interpolate_str = _pil_interpolation_to_str[self.interpolation]
-        format_string = self.__class__.__name__ + '(size={0}'.format(self.size)
-        format_string += ', xscale={0}'.format(tuple(round(s, 4) for s in self.xscale))
-        format_string += ', yscale={0}'.format(tuple(round(r, 4) for r in self.xscale))
-        format_string += ', interpolation={0})'.format(interpolate_str)
-        return format_string
-
 transform= { 
  'train':transforms.Compose([
      transforms.RandomRotation(12, resample=Image.BILINEAR),
-     #transforms.RandomResizedCrop(args.size,scale=(0.2, 1.0), 
-     #                             ratio=(0.8, 1.25), interpolation=Image.BILINEAR),
-     CenterRandomCrop(args.size),
+     transforms.RandomResizedCrop(args.size,scale=(0.2, 1.0), 
+                                  ratio=(0.8, 1.25), interpolation=Image.BILINEAR),
      transforms.ColorJitter(0.2,0.1,0.1,0.04),
      transforms.RandomHorizontalFlip(),
      transforms.RandomVerticalFlip(),
@@ -150,7 +122,7 @@ class APTOSDataset(Dataset):
         self.data=data
         self.transform = transform
         self.data_path = args.dataset.split(',')
-        self.weights = [1, 0.2, 1, 0.8]
+        self.weights = [1, 0.7, 1, 0.9]
     def __len__(self):
         return len(self.data)
 
@@ -222,7 +194,7 @@ class L1_cut_loss(nn.Module):
 
     
 def main():
-    weight = torch.tensor([1, 1.88, 1.27, 2.4, 2.4])  #[1,1.7,1.4,2.6,5]
+    weight = torch.tensor([1 ,1.7, 1.4, 2.8, 4])  #[1,1.7,1.4,2.6,5]
     
     if args.loss == 'data_wmse' or args.loss == 'data_wmse2':
         criterion = data_mse()
@@ -324,7 +296,7 @@ def main():
                             dtype={'id':str, 'diagnosis':np.int8})
     df1['dataset'] = 0
     df, df_val = \
-        train_test_split(df1, test_size=0.1, random_state=42)
+        train_test_split(df1, test_size=0.05, random_state=40)
     
     print('Current Competition:')
     print(df.groupby('diagnosis').count())    
@@ -355,7 +327,6 @@ def main():
     df=df.append(df3)
     
     #messidor
-    '''
     df4=pd.DataFrame()
     for i in range(1,4):
         for j in range(1,5):
@@ -366,7 +337,6 @@ def main():
     df4['dataset'] = 3
     print('Messidor:')
     print(df4.groupby('diagnosis').count())
-    '''
     
     
     print('Overall train:')
