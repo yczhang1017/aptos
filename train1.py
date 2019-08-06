@@ -30,9 +30,9 @@ from efficientnet_pytorch.utils import (
     BlockArgs,
     url_map
 )
-
-
-
+from efficientnet_pytorch.model import (
+    MBConvBlock
+)
 
 parser = argparse.ArgumentParser(
     description='train a model')
@@ -52,7 +52,7 @@ parser.add_argument('--weight_decay', default=5e-4, type=float,
                     help='Weight decay')
 parser.add_argument('--resume', default=0, type=int,
                     help='epoch number to be resumed at')
-parser.add_argument('--model', default='pnasnet5large', type=str,
+parser.add_argument('--model', default='pnasv2', type=str,
                     help='model name')
 parser.add_argument('--checkpoint', default=None, type=str,
                     help='Checkpoint state_dict file to resume training from') 
@@ -77,7 +77,7 @@ std=[0.2392, 0.1326, 0.0470]
 transform= { 
  'train':transforms.Compose([
      transforms.RandomRotation(12, resample=Image.BILINEAR),
-     transforms.RandomResizedCrop(args.size,scale=(0.2, 1.0), 
+     transforms.RandomResizedCrop(args.size,scale=(0.1, 1.0), 
                                   ratio=(0.8, 1.25), interpolation=Image.BILINEAR),
      transforms.ColorJitter(0.2,0.1,0.1,0.04),
      transforms.RandomHorizontalFlip(),
@@ -122,7 +122,7 @@ class APTOSDataset(Dataset):
         self.data=data
         self.transform = transform
         self.data_path = args.dataset.split(',')
-        self.weights = [1, 0.7, 1, 0.9]
+        self.weights = [1, 0.8, 1, 0.9]
     def __len__(self):
         return len(self.data)
 
@@ -194,7 +194,7 @@ class L1_cut_loss(nn.Module):
 
     
 def main():
-    weight = torch.tensor([1 ,1.7, 1.4, 2.8, 4])  #[1,1.7,1.4,2.6,5]
+    weight = torch.tensor([1 ,1.7, 1.4, 2.8, 4.4])  #[1,1.7,1.4,2.6,5]
     
     if args.loss == 'data_wmse' or args.loss == 'data_wmse2':
         criterion = data_mse()
@@ -254,7 +254,24 @@ def main():
                 nn.Dropout(p=0.4),
                 nn.Linear(in_features=60, out_features=1, bias=True))
          
-         
+    elif args.model == 'pnasv2':
+        _, global_params = get_model_params('efficientnet-b1', None)
+        model = pretrainedmodels.__dict__['pnasnet5large'](num_classes=1000, pretrained='imagenet')
+        model.avg_pool = nn.Sequential(
+                MBConvBlock(
+                    BlockArgs(kernel_size=1, num_repeat=3, input_filters=4320, output_filters=2160, 
+                    expand_ratio=6, id_skip=True, stride=[2], se_ratio=0.25), global_params),
+                nn.AdaptiveAvgPool2d(1))
+        model.last_linear = nn.Sequential( 
+                nn.BatchNorm1d(2160),
+                nn.Dropout(p=0.5),
+                nn.Linear(in_features=2160, out_features=600, bias=True),
+                nn.ReLU(),
+                nn.BatchNorm1d(200),
+                nn.Dropout(p=0.5),
+                nn.Linear(in_features=200, out_features=1, bias=True),
+                )
+        
     elif args.model in pretrainedmodels.__dict__.keys():
         model = pretrainedmodels.__dict__[args.model](num_classes=1000, pretrained='imagenet')
         model.avg_pool = nn.AdaptiveAvgPool2d(1)
