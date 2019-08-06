@@ -265,7 +265,7 @@ def main():
         model.last_linear = nn.Sequential( 
                 nn.BatchNorm1d(2160),
                 nn.Dropout(p=0.5),
-                nn.Linear(in_features=2160, out_features=600, bias=True),
+                nn.Linear(in_features=2160, out_features=200, bias=True),
                 nn.ReLU(),
                 nn.BatchNorm1d(200),
                 nn.Dropout(p=0.5),
