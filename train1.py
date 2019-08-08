@@ -313,7 +313,7 @@ def main():
         df=df.append(df1.groupby('diagnosis').apply(lambda x: x.sample(200, replace = True)).set_index('id'))
         df=df.append(df2.groupby('diagnosis').apply(lambda x: x.sample(700, replace = True)).set_index('id'))
         df=df.append(df3.groupby('diagnosis').apply(lambda x: x.sample(20, replace = True)).set_index('id'))
-       
+        df=df.set_index(range(len(df)))
         print('Overall train:', len(df))
         print(df.groupby('diagnosis').count())
         
@@ -349,7 +349,7 @@ def main():
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = model(inputs)
-                    loss = criterion(outputs, targets.long())
+                    loss = criterion(outputs, targets)
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
@@ -358,11 +358,11 @@ def main():
                 loss = loss.item() 
                 running_loss += loss * inputs.size(0)
                 propose=outputs.round().long().clamp(0,4)
-                correct = (propose==targets.long()).sum().item()
+                correct = (propose==targets).sum().item()
                 acc = correct/batch*100
                 running_correct +=correct
                 p=propose.cpu().tolist()
-                t=targets.long().cpu().tolist()
+                t=targets.cpu().tolist()
                 predict+=p
                 truth+=t
                 t2 = time.time()
