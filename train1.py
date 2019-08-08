@@ -341,17 +341,15 @@ def main():
             predict=[]
             truth=[]
             
-            for inputs,targets,data_weight in dataloader[phase]:
+            for inputs,targets in dataloader[phase]:
                 t1 = time.time()
                 batch = inputs.size(0)
                 inputs = inputs.to(device).float()                
                 targets= targets.to(device).long()
-                data_weight = data_weight.to(device).float()
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
-                    outputs = model(inputs).reshape(batch)
+                    outputs = model(inputs)
                     loss = criterion(outputs, targets.long())
-                        
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
