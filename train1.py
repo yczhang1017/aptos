@@ -201,13 +201,13 @@ def main():
         model = pretrainedmodels.__dict__['pnasnet5large'](num_classes=1000, pretrained='imagenet')
         model.avg_pool = nn.Sequential(
                 MBConvBlock(
-                    BlockArgs(kernel_size=3, num_repeat=3, input_filters=4320, output_filters=2160, 
+                    BlockArgs(kernel_size=3, num_repeat=3, input_filters=4320, output_filters=1000, 
                     expand_ratio=3, id_skip=True, stride=[2], se_ratio=0.25), global_params),
                 nn.AdaptiveAvgPool2d(1))
         model.last_linear = nn.Sequential( 
-                nn.BatchNorm1d(2160),
+                nn.BatchNorm1d(1000),
                 nn.Dropout(p=0.5),
-                nn.Linear(in_features=2160, out_features=200, bias=True),
+                nn.Linear(in_features=1000, out_features=200, bias=True),
                 nn.ReLU(),
                 nn.BatchNorm1d(200),
                 nn.Dropout(p=0.5),
