@@ -150,7 +150,7 @@ class APTOSDataset(Dataset):
 
     
 def main():
-    criterion = nn.CrossEntropyLoss().cuda()
+    criterion = nn.MSELoss().cuda()
     
     if args.model == 'effnet':
         blocks_args, global_params = get_model_params('efficientnet-b5', None)
@@ -211,7 +211,7 @@ def main():
                 nn.ReLU(),
                 nn.BatchNorm1d(200),
                 nn.Dropout(p=0.5),
-                nn.Linear(in_features=200, out_features=5, bias=True),
+                nn.Linear(in_features=200, out_features=1, bias=True),
                 )
         
     elif args.model in pretrainedmodels.__dict__.keys():
@@ -228,7 +228,7 @@ def main():
                 nn.ReLU(),
                 nn.BatchNorm1d(100),
                 nn.Dropout(p=0.5),
-                nn.Linear(in_features=100, out_features=5, bias=True),
+                nn.Linear(in_features=100, out_features=1, bias=True),
                 )
     elif args.model == 'nasnetv2':
         model = nasnetv2()
@@ -348,7 +348,7 @@ def main():
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = model(inputs)
-                    loss = criterion(outputs, targets)
+                    loss = criterion(outputs, targets.float())
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
@@ -356,8 +356,8 @@ def main():
                 num += batch
                 loss = loss.item() 
                 running_loss += loss * inputs.size(0)
-                #propose=outputs.round().long().clamp(0,4)
-                max, propose = outputs.data.max(1)
+                propose=outputs.round().long().clamp(0,4)
+                #max, propose = outputs.data.max(1)
                 correct = (propose==targets).sum().item()
                 acc = correct/batch*100
                 running_correct +=correct
