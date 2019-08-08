@@ -314,7 +314,9 @@ def main():
         df=df.append(df2.groupby('diagnosis').apply(lambda x: x.sample(700, replace = True)).set_index('id'))
         df=df.append(df3.groupby('diagnosis').apply(lambda x: x.sample(20, replace = True)).set_index('id'))
        
-        print('Overall train:')
+        print('Overall train:', len(df))
+        print(df.groupby('diagnosis').count())
+        
         data={'train':df, 'val':df_val}
         dataset={x: APTOSDataset(x, data[x], transform[x]) 
                 for x in ['train', 'val']}
