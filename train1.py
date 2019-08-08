@@ -55,7 +55,7 @@ parser.add_argument('--model', default='pnasv2', type=str,
                     help='model name')
 parser.add_argument('--checkpoint', default=None, type=str,
                     help='Checkpoint state_dict file to resume training from') 
-parser.add_argument('--size', default=320, type=int,
+parser.add_argument('--size', default=352, type=int,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
@@ -201,13 +201,13 @@ def main():
         model = pretrainedmodels.__dict__['pnasnet5large'](num_classes=1000, pretrained='imagenet')
         model.avg_pool = nn.Sequential(
                 MBConvBlock(
-                    BlockArgs(kernel_size=3, num_repeat=3, input_filters=4320, output_filters=1000, 
-                    expand_ratio=3, id_skip=True, stride=[2], se_ratio=0.25), global_params),
+                    BlockArgs(kernel_size=5, num_repeat=3, input_filters=4320, output_filters=2160, 
+                    expand_ratio=3, id_skip=True, stride=[3], se_ratio=0.25), global_params),
                 nn.AdaptiveAvgPool2d(1))
         model.last_linear = nn.Sequential( 
-                nn.BatchNorm1d(1000),
+                nn.BatchNorm1d(2160),
                 nn.Dropout(p=0.5),
-                nn.Linear(in_features=1000, out_features=200, bias=True),
+                nn.Linear(in_features=2160, out_features=200, bias=True),
                 nn.ReLU(),
                 nn.BatchNorm1d(200),
                 nn.Dropout(p=0.5),
