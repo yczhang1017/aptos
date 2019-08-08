@@ -310,10 +310,9 @@ def main():
     for epoch in range(args.resume,args.epochs):
         
         df=pd.DataFrame()
-        df=df.append(df1.groupby('diagnosis').apply(lambda x: x.sample(200, replace = True)).set_index('id'))
-        df=df.append(df2.groupby('diagnosis').apply(lambda x: x.sample(700, replace = True)).set_index('id'))
-        df=df.append(df3.groupby('diagnosis').apply(lambda x: x.sample(20, replace = True)).set_index('id'))
-        df=df.set_index(range(len(df)))
+        df=df.append(df1.groupby('diagnosis').apply(lambda x: x.sample(200, replace = True)).reset_index(drop=True))
+        df=df.append(df2.groupby('diagnosis').apply(lambda x: x.sample(700, replace = True)).reset_index(drop=True))
+        df=df.append(df3.groupby('diagnosis').apply(lambda x: x.sample(20, replace = True)).reset_index(drop=True))
         print('Overall train:', len(df))
         print(df.groupby('diagnosis').count())
         
