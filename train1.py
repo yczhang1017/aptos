@@ -16,7 +16,6 @@ import time
 import argparse
 import pretrainedmodels
 from sklearn.model_selection import train_test_split
-import torch.nn.functional as f
 from nasnetv2 import nasnetv2
 from sklearn.metrics import cohen_kappa_score, confusion_matrix
 from kappas import quadratic_weighted_kappa
@@ -44,7 +43,7 @@ parser.add_argument('--workers', default=4, type=int,
                     help='Number of workers used in dataloading')
 parser.add_argument('--lr', '--learning-rate', default=1e-3, type=float,
                     help='initial learning rate')
-parser.add_argument('-e','--epochs', default=48, type=int,
+parser.add_argument('-e','--epochs', default=60, type=int,
                     help='number of epochs to train')
 parser.add_argument('-s','--save_folder', default='save/', type=str,
                     help='Dir to save results')
@@ -60,7 +59,7 @@ parser.add_argument('--size', default=320, type=int,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
-parser.add_argument('--loss', default='data_wmse2',  choices=['mse', 'wmse','huber','l1_cut', 'wmse2', 'data_wmse2'], type=str,
+parser.add_argument('--loss', default='CE',  choices=['CE'], type=str,
                     help='type of loss')
 parser.add_argument('--dataset', default='train640,prev640,IEEE640,messidor640', type=str,
                     help='previous competition dataset directory')
@@ -147,68 +146,11 @@ class APTOSDataset(Dataset):
             return image, y, self.weights[d]
         elif self.phase == 'test' :
             return image 
-'''        
-class MSELogLoss(nn.Module):
-    def __init__(self):
-        super(MSELogLoss, self).__init__()
-    def forward(self, inputs, targets):
-        return torch.mean(-(1-(inputs-targets)*(inputs-targets)*(1/4.5/4.5)).log())
 
-class M4Loss(nn.Module):
-    def __init__(self):
-        super(M4Loss, self).__init__()
-    def forward(self, inputs, targets):
-        return torch.mean((inputs-targets)*(inputs-targets)*(inputs-targets)*(inputs-targets))
-'''
-class weighted_mse(nn.Module):
-    def __init__(self, weight):
-        super(weighted_mse, self).__init__()
-        self.weight=weight.float().to(device)
-    def forward(self, input, target):
-        truth=target.long()
-        return torch.mean(self.weight[truth]*(input-target)*(input-target))
-
-class data_mse(nn.Module):
-    def __init__(self):
-        super(data_mse, self).__init__()
-    def forward(self, input, target, data_weight):
-        return torch.mean((input-target)*(input-target)*data_weight)
-    
-class data_weighted_mse(nn.Module):
-    def __init__(self, weight):
-        super(data_weighted_mse, self).__init__()
-        self.weight=weight.float().to(device)
-    def forward(self, input, target, data_weight):
-        truth=target.long()
-        return torch.mean(self.weight[truth]*(input-target)*(input-target)*data_weight)
-
-    
-class L1_cut_loss(nn.Module):
-    def __init__(self, weight):
-        super(L1_cut_loss, self).__init__()
-        self.weight=weight.float().to(device)
-    def forward(self, input, target):
-        truth=target.long()
-        loss=self.weight[truth]*f.relu(torch.abs(input-target)-0.5)
-        return loss.mean()
 
     
 def main():
-    weight = torch.tensor([1 ,1.7, 1.4, 2.8, 4.4])  #[1,1.7,1.4,2.6,5]
-    
-    if args.loss == 'data_wmse' or args.loss == 'data_wmse2':
-        criterion = data_mse()
-    elif args.loss == 'mse' or args.loss == 'wmse2':
-        criterion = nn.MSELoss()
-    elif args.loss == 'wmse':
-        print(weight)
-        criterion = weighted_mse(weight)
-    elif args.loss== 'huber':
-        criterion = nn.SmoothL1Loss()
-    elif args.loss== 'l1_cut':
-        print(weight)
-        criterion = L1_cut_loss(weight)
-    
+    criterion = nn.CrossEntropyLoss().cuda()
     
     if args.model == 'effnet':
         blocks_args, global_params = get_model_params('efficientnet-b5', None)
@@ -269,7 +211,7 @@ def main():
                 nn.ReLU(),
                 nn.BatchNorm1d(200),
                 nn.Dropout(p=0.5),
-                nn.Linear(in_features=200, out_features=1, bias=True),
+                nn.Linear(in_features=200, out_features=5, bias=True),
                 )
         
     elif args.model in pretrainedmodels.__dict__.keys():
@@ -277,16 +219,16 @@ def main():
         model.avg_pool = nn.AdaptiveAvgPool2d(1)
         model.last_linear = nn.Sequential( 
                 nn.BatchNorm1d(4320),
-                nn.Dropout(p=0.25),
+                nn.Dropout(p=0.5),
                 nn.Linear(in_features=4320, out_features=600, bias=True),
                 nn.ReLU(),
                 nn.BatchNorm1d(600),
-                nn.Dropout(p=0.25),
+                nn.Dropout(p=0.5),
                 nn.Linear(in_features=600, out_features=100, bias=True),
                 nn.ReLU(),
                 nn.BatchNorm1d(100),
-                nn.Dropout(p=0.25),
-                nn.Linear(in_features=100, out_features=1, bias=True),
+                nn.Dropout(p=0.5),
+                nn.Linear(in_features=100, out_features=5, bias=True),
                 )
     elif args.model == 'nasnetv2':
         model = nasnetv2()
@@ -305,18 +247,19 @@ def main():
  
     optimizer = optim.SGD(model.parameters(),lr=args.lr, 
                           momentum=0.9, weight_decay=args.weight_decay)
-    scheduler = MultiStepLR(optimizer, milestones=[16,24,32,40], gamma=0.1)
+    scheduler = MultiStepLR(optimizer, milestones=
+                            (np.array([1/3,1/2,2/3,5/6])*args.epochs).astype(int).tolist(), gamma=0.1)
     
     train_csv=os.path.join(args.root, 'train.csv')
     #dist= df.groupby('diagnosis').count().values.reshape(5)
     df1 = pd.read_csv(train_csv, header=1, names = ['id', 'diagnosis'], 
                             dtype={'id':str, 'diagnosis':np.int8})
     df1['dataset'] = 0
-    df, df_val = \
+    df1, df_val = \
         train_test_split(df1, test_size=0.05, random_state=40)
     
     print('Current Competition:')
-    print(df.groupby('diagnosis').count())    
+    print(df1.groupby('diagnosis').count())    
     
     #Previous dataset    
     ext_csv = os.path.join(args.root, 'exter-resized', 'trainLabels_cropped.csv')
@@ -326,7 +269,7 @@ def main():
     df2['dataset'] = 1
     print('Previous Dataset:')
     print(df2.groupby('diagnosis').count())
-    df=df.append(df2)
+   
     
     
     #IEEE
@@ -341,9 +284,10 @@ def main():
     df3['dataset'] =2
     print('IEEE')
     print(df3.groupby('diagnosis').count())
-    df=df.append(df3)
+    
     
     #messidor
+    '''
     df4=pd.DataFrame()
     for i in range(1,4):
         for j in range(1,5):
@@ -354,34 +298,33 @@ def main():
     df4['dataset'] = 3
     print('Messidor:')
     print(df4.groupby('diagnosis').count())
+    '''
     
-    
-    print('Overall train:')
-    print(df.groupby('diagnosis').count())
     print('Overall val:')
     print(df_val.groupby('diagnosis').count())
     
     
-    data={'train':df, 'val':df_val}
-    dataset={x: APTOSDataset(x, data[x], transform[x]) 
-            for x in ['train', 'val']}
-    dataloader={x: DataLoader(dataset[x],
-            batch_size=args.batch, shuffle = (x=='train'),
-            num_workers=args.workers,pin_memory=True)
-            for x in ['train', 'val']}
-    
-    flag = False
     for i in range(args.resume):
         scheduler.step()
+        
     for epoch in range(args.resume,args.epochs):
+        
+        df=pd.DataFrame()
+        df=df.append(df1.groupby('diagnosis').apply(lambda x: x.sample(200, replace = True)))
+        df=df.append(df2.groupby('diagnosis').apply(lambda x: x.sample(700, replace = True)))
+        df=df.append(df3.groupby('diagnosis').apply(lambda x: x.sample(20, replace = True)))
+       
+        print('Overall train:')
+        print(df.groupby('diagnosis').count())
+        data={'train':df, 'val':df_val}
+        dataset={x: APTOSDataset(x, data[x], transform[x]) 
+                for x in ['train', 'val']}
+        dataloader={x: DataLoader(dataset[x],
+                batch_size=args.batch, shuffle = (x=='train'),
+                num_workers=args.workers,pin_memory=True)
+                for x in ['train', 'val']}
         print('Epoch {}/{}'.format(epoch+1, args.epochs))
         print('-' * 10)
-        
-        if (not flag) and epoch >= 3 and args.loss.endswith('2'):
-            flag = True
-        if flag and args.loss == 'data_wmse2':
-            print('applying weights to loss:', weight)
-            criterion = data_weighted_mse(weight)
                 
         for phase in ['train','val']:
             if phase == 'train':
@@ -401,15 +344,12 @@ def main():
                 t1 = time.time()
                 batch = inputs.size(0)
                 inputs = inputs.to(device).float()                
-                targets= targets.to(device).float()
+                targets= targets.to(device).long()
                 data_weight = data_weight.to(device).float()
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = model(inputs).reshape(batch)
-                    if args.loss.startswith('data'):
-                        loss = criterion(outputs, targets.float(), data_weight)
-                    else:
-                        loss = criterion(outputs, targets.float())
+                    loss = criterion(outputs, targets.long())
                         
                     if phase == 'train':
                         loss.backward()
