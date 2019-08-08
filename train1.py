@@ -143,7 +143,7 @@ class APTOSDataset(Dataset):
         image = Image.open(img_name)
         image = self.transform(image)
         if self.phase in ['train','val']:
-            return image, y, self.weights[d]
+            return image, y
         elif self.phase == 'test' :
             return image 
 
