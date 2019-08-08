@@ -356,7 +356,8 @@ def main():
                 num += batch
                 loss = loss.item() 
                 running_loss += loss * inputs.size(0)
-                propose=outputs.round().long().clamp(0,4)
+                #propose=outputs.round().long().clamp(0,4)
+                max, propose = outputs.data.max(1)
                 correct = (propose==targets).sum().item()
                 acc = correct/batch*100
                 running_correct +=correct
