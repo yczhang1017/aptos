@@ -43,7 +43,7 @@ parser.add_argument('--workers', default=4, type=int,
                     help='Number of workers used in dataloading')
 parser.add_argument('--lr', '--learning-rate', default=1e-3, type=float,
                     help='initial learning rate')
-parser.add_argument('-e','--epochs', default=150, type=int,
+parser.add_argument('-e','--epochs', default=120, type=int,
                     help='number of epochs to train')
 parser.add_argument('-s','--save_folder', default='save/', type=str,
                     help='Dir to save results')
@@ -76,7 +76,7 @@ std=[0.2392, 0.1326, 0.0470]
 transform= { 
  'train':transforms.Compose([
      transforms.RandomRotation(12, resample=Image.BILINEAR),
-     transforms.RandomResizedCrop(args.size,scale=(0.1, 1.0), 
+     transforms.RandomResizedCrop(args.size,scale=(0.2, 1.0), 
                                   ratio=(0.8, 1.25), interpolation=Image.BILINEAR),
      transforms.ColorJitter(0.2,0.1,0.1,0.04),
      transforms.RandomHorizontalFlip(),
@@ -150,7 +150,7 @@ class APTOSDataset(Dataset):
 
     
 def main():
-    criterion = nn.MSELoss().cuda()
+    criterion = nn.CrossEntropyLoss().cuda()
     
     if args.model == 'effnet':
         blocks_args, global_params = get_model_params('efficientnet-b5', None)
@@ -206,12 +206,12 @@ def main():
                 nn.AdaptiveAvgPool2d(1))
         model.last_linear = nn.Sequential( 
                 nn.BatchNorm1d(2160),
-                nn.Dropout(p=0.5),
-                nn.Linear(in_features=2160, out_features=200, bias=True),
+                nn.Dropout(p=0.25),
+                nn.Linear(in_features=2160, out_features=400, bias=True),
                 nn.ReLU(),
-                nn.BatchNorm1d(200),
-                nn.Dropout(p=0.5),
-                nn.Linear(in_features=200, out_features=1, bias=True),
+                nn.BatchNorm1d(400),
+                nn.Dropout(p=0.25),
+                nn.Linear(in_features=400, out_features=5, bias=True),
                 )
         
     elif args.model in pretrainedmodels.__dict__.keys():
@@ -228,7 +228,7 @@ def main():
                 nn.ReLU(),
                 nn.BatchNorm1d(100),
                 nn.Dropout(p=0.5),
-                nn.Linear(in_features=100, out_features=1, bias=True),
+                nn.Linear(in_features=100, out_features=5, bias=True),
                 )
     elif args.model == 'nasnetv2':
         model = nasnetv2()
@@ -348,7 +348,7 @@ def main():
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = model(inputs).reshape(batch)
-                    loss = criterion(outputs, targets.float())
+                    loss = criterion(outputs, targets)
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
@@ -356,8 +356,8 @@ def main():
                 num += batch
                 loss = loss.item() 
                 running_loss += loss * inputs.size(0)
-                propose=outputs.round().long().clamp(0,4)
-                #max, propose = outputs.data.max(1)
+                #propose=outputs.round().long().clamp(0,4)
+                max, propose = outputs.data.max(1)
                 correct = (propose==targets).sum().item()
                 acc = correct/batch*100
                 running_correct +=correct
