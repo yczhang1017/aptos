@@ -347,7 +347,7 @@ def main():
                 targets= targets.to(device).long()
                 optimizer.zero_grad()
                 with torch.set_grad_enabled(phase == 'train'):
-                    outputs = model(inputs).reshape(batch)
+                    outputs = model(inputs)
                     loss = criterion(outputs, targets)
                     if phase == 'train':
                         loss.backward()
