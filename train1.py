@@ -55,7 +55,7 @@ parser.add_argument('--model', default='pnasv2', type=str,
                     help='model name')
 parser.add_argument('--checkpoint', default=None, type=str,
                     help='Checkpoint state_dict file to resume training from') 
-parser.add_argument('--size', default=320, type=int,
+parser.add_argument('--size', default='256,320', type=str,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
@@ -72,12 +72,43 @@ if not os.path.exists(args.save_folder):
 
 mean=[0.4402, 0.2334, 0.0674]
 std=[0.2392, 0.1326, 0.0470]
+size = [int(i) for i in args.size.split(',')]
+size =tuple(size) 
+
+import random 
+from torchvision.transforms.transforms import _pil_interpolation_to_str 
+from torchvision.transforms import functional as F
+class CenterRandomCrop(object):
+    def __init__(self, size, xscale=(0.6, 1.0), aspect_ratio=(1, 1.4), interpolation=Image.BILINEAR):
+        if isinstance(size, tuple):
+            self.size = size
+        else:
+            self.size = (size, size)
+        self.interpolation = interpolation
+        self.xscale = xscale
+        self.aspect_ratio = aspect_ratio
+    def __call__(self, img):
+        xc = img.size[0]//2 * random.uniform(0.9,10/9)
+        yc = img.size[1]//2 * random.uniform(0.9,10/9)
+        xscale = random.uniform(*self.xscale)
+        aspect_ratio = random.uniform(*self.aspect_ratio)
+        yscale = xscale/aspect_ratio
+        w = round(xc*xscale)
+        h = round(yc*yscale)
+        return F.resized_crop(img,yc-h,xc-w,2*h,2*w, self.size, self.interpolation)
+    def __repr__(self):
+        interpolate_str = _pil_interpolation_to_str[self.interpolation]
+        format_string = self.__class__.__name__ + '(size={0}'.format(self.size)
+        format_string += ', xscale={0}'.format(tuple(round(s, 4) for s in self.xscale))
+        format_string += ', yscale={0}'.format(tuple(round(r, 4) for r in self.xscale))
+        format_string += ', interpolation={0})'.format(interpolate_str)
+        return format_string
+
 
 transform= { 
  'train':transforms.Compose([
      transforms.RandomRotation(12, resample=Image.BILINEAR),
-     transforms.RandomResizedCrop(args.size,scale=(0.2, 1.0), 
-                                  ratio=(0.8, 1.25), interpolation=Image.BILINEAR),
+     CenterRandomCrop(size, xscale=(0.6, 1.0), aspect_ratio=(1, 1.4)),
      transforms.ColorJitter(0.2,0.1,0.1,0.04),
      transforms.RandomHorizontalFlip(),
      transforms.RandomVerticalFlip(),
@@ -85,8 +116,8 @@ transform= {
      transforms.Normalize(mean,std)
      ]),      
  'val':transforms.Compose([
-     transforms.Resize((args.size,args.size),
-                        interpolation=Image.BILINEAR),
+     transforms.Resize(size,
+                       interpolation=Image.BILINEAR),
      transforms.ToTensor(),
      transforms.Normalize(mean,std)
      ])}
