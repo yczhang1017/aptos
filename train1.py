@@ -116,7 +116,7 @@ transform= {
      transforms.Normalize(mean,std)
      ]),      
  'val':transforms.Compose([
-     transforms.CenterCrop(512,640),
+     transforms.CenterCrop((512,640)),
      transforms.Resize(size,
                        interpolation=Image.BILINEAR),
      transforms.ToTensor(),
