@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 
-import PIL
+from PIL import Image
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -70,9 +70,9 @@ size =tuple(size)
 
 transform= { 
  'train':transforms.Compose([
-     transforms.RandomRotation(10, resample=PIL.Image.BILINEAR),
+     transforms.RandomRotation(10, resample=Image.BILINEAR),
      transforms.RandomResizedCrop(size,scale=(0.2, 1.0), 
-                                  ratio=(1, 1.5),interpolation=PIL.Image.BILINEAR),
+                                  ratio=(1, 1.5),interpolation=Image.BILINEAR),
      transforms.ColorJitter(0.2,0.1,0.1,0.04),
      transforms.RandomHorizontalFlip(),
      transforms.RandomVerticalFlip(),
@@ -82,7 +82,7 @@ transform= {
  'val':transforms.Compose([
      transforms.CenterCrop((512,640)),
      transforms.Resize(size,
-                       interpolation=PIL.Image.BILINEAR),
+                       interpolation=Image.BILINEAR),
      transforms.ToTensor(),
      transforms.Normalize(mean,std)
      ])}
