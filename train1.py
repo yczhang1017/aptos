@@ -14,8 +14,6 @@ import time
 import argparse
 import pretrainedmodels
 from sklearn.model_selection import train_test_split
-import torch.nn.functional as f
-from nasnetv2 import nasnetv2
 from sklearn.metrics import cohen_kappa_score, confusion_matrix
 from kappas import quadratic_weighted_kappa
 from torch.utils.data import Dataset, DataLoader
