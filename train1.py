@@ -146,7 +146,7 @@ def main():
     if args.model in pretrainedmodels.__dict__.keys():
         model = pretrainedmodels.__dict__[args.model](num_classes=1000, pretrained='imagenet')
         model.avg_pool = nn.Conv2d(in_channels=4320, out_channels=4320, groups=4320, 
-            kernel_size=(4,5), stride=1, bias=False)
+            kernel_size=(8,10), stride=1, bias=False)
             
         model.last_linear = nn.Sequential( 
                 nn.BatchNorm1d(4320),
@@ -161,8 +161,6 @@ def main():
                 nn.Dropout(p=0.25),
                 nn.Linear(in_features=100, out_features=5, bias=True),
                 )
-    elif args.model == 'nasnetv2':
-        model = nasnetv2()
     
     #print(model)
     model = model.to(device)
