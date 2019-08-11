@@ -122,7 +122,7 @@ class APTOSDataset(Dataset):
             row = self.data.iloc[idx]
             d = int(row['dataset'])
             root = self.data_path[d]
-            y = float(row['diagnosis'])
+            y = int(row['diagnosis'])
             if d==3:
                 y=(y+0.5)/4*5-0.5
             
