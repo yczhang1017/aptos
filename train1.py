@@ -140,7 +140,7 @@ class APTOSDataset(Dataset):
     
 def main():
     criterion = nn.CrossEntropyLoss(
-                torch.tensor([1, 4.9, 2.8, 9.3, 10])).cuda()
+                torch.tensor([0.7, 5, 3, 9.3, 10])).cuda()
     
     if args.model in pretrainedmodels.__dict__.keys():
         model = pretrainedmodels.__dict__[args.model](num_classes=1000, pretrained='imagenet')
