@@ -51,8 +51,6 @@ parser.add_argument('--size', default='256,320', type=str,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
-parser.add_argument('--loss', default='mse',  choices=['mse', 'wmse','huber','l1_cut'], type=str,
-                    help='type of loss')
 parser.add_argument('--dataset', default='train640,prev640,IEEE640,messidor640', type=str,
                     help='previous competition dataset directory')
 
@@ -141,7 +139,8 @@ class APTOSDataset(Dataset):
 
     
 def main():
-    criterion = nn.CrossEntropyLoss().cuda()
+    criterion = nn.CrossEntropyLoss(
+                torch.tensor([1, 2.5, 1.6, 3.6, 5])).cuda()
     
     if args.model in pretrainedmodels.__dict__.keys():
         model = pretrainedmodels.__dict__[args.model](num_classes=1000, pretrained='imagenet')
