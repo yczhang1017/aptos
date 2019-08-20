@@ -47,7 +47,7 @@ parser.add_argument('--model', default='pnasnet5large', type=str,
                     help='model name')
 parser.add_argument('--checkpoint', default=None, type=str,
                     help='Checkpoint state_dict file to resume training from') 
-parser.add_argument('--size', default='256,320', type=str,
+parser.add_argument('--size', default='224,224', type=str,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
@@ -76,7 +76,6 @@ transform= {
      transforms.Normalize(mean,std)
      ]),      
  'val':transforms.Compose([
-     transforms.CenterCrop((512,640)),
      transforms.Resize(size,
                        interpolation=Image.BILINEAR),
      transforms.ToTensor(),
@@ -140,13 +139,11 @@ class APTOSDataset(Dataset):
     
 def main():
     criterion = nn.CrossEntropyLoss(
-                torch.tensor([0.7, 5, 3, 9.3, 10])).cuda()
+                torch.tensor([0.6, 8, 3.5, 9.3, 10])).cuda()
     
     if args.model in pretrainedmodels.__dict__.keys():
         model = pretrainedmodels.__dict__[args.model](num_classes=1000, pretrained='imagenet')
-        model.avg_pool = nn.Conv2d(in_channels=4320, out_channels=4320, groups=4320, 
-            kernel_size=(8,10), stride=1, bias=False)
-            
+        model.avg_pool = nn.AdaptiveAvgPool2d(1)
         model.last_linear = nn.Sequential( 
                 nn.BatchNorm1d(4320),
                 nn.Dropout(p=0.25),
