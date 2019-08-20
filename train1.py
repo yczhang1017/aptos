@@ -66,9 +66,9 @@ size =tuple(size)
 
 transform= { 
  'train':transforms.Compose([
-     transforms.RandomRotation(10, resample=Image.BILINEAR),
-     transforms.RandomResizedCrop(size,scale=(0.2, 1.0), 
-                                  ratio=(1, 1.5),interpolation=Image.BILINEAR),
+     transforms.RandomRotation(15, resample=Image.BILINEAR),
+     transforms.RandomResizedCrop(size,scale=(0.1, 1.0), 
+                                  ratio=(0.666667, 1.5),interpolation=Image.BILINEAR),
      transforms.ColorJitter(0.2,0.1,0.1,0.04),
      transforms.RandomHorizontalFlip(),
      transforms.RandomVerticalFlip(),
@@ -139,7 +139,7 @@ class APTOSDataset(Dataset):
     
 def main():
     criterion = nn.CrossEntropyLoss(
-                torch.tensor([0.7, 6.5, 3.5, 9.3, 10])).cuda()
+                torch.tensor([1, 6.2, 3.2, 12.7, 13.7])).cuda()
     
     if args.model in pretrainedmodels.__dict__.keys():
         model = pretrainedmodels.__dict__[args.model](num_classes=1000, pretrained='imagenet')
