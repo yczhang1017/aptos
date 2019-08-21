@@ -47,7 +47,7 @@ parser.add_argument('--model', default='pnasnet5large', type=str,
                     help='model name')
 parser.add_argument('--checkpoint', default=None, type=str,
                     help='Checkpoint state_dict file to resume training from') 
-parser.add_argument('--size', default='224,224', type=str,
+parser.add_argument('--size', default='320,320', type=str,
                     help='image size')
 parser.add_argument('--print', default=10, type=int,
                     help='print freq')
@@ -69,7 +69,7 @@ transform= {
      transforms.RandomRotation(15, resample=Image.BILINEAR),
      transforms.RandomResizedCrop(size,scale=(0.1, 1.0), 
                                   ratio=(0.666667, 1.5),interpolation=Image.BILINEAR),
-     transforms.ColorJitter(0.2,0.1,0.1,0.04),
+     transforms.ColorJitter(0.2,0.1,0.1,0.02),
      transforms.RandomHorizontalFlip(),
      transforms.RandomVerticalFlip(),
      transforms.ToTensor(),
